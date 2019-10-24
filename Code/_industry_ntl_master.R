@@ -7,9 +7,8 @@ if(Sys.info()[["user"]] == "robmarty") project_file_path <- "~/Dropbox/World Ban
 
 raw_data_file_path <- file.path(project_file_path, "Data", "RawData")
 final_data_file_path <- file.path(project_file_path, "Data", "FinalData")
-figures_file_path <- file.path(project_file_path, "Results", "Figures")
-tables_file_path <- file.path(project_file_path, "Results", "Tables")
-code_file_path <- file.path(project_file_path, "Code")
+figures_file_path <- file.path(project_file_path, "Paper", "figures")
+tables_file_path <- file.path(project_file_path, "Paper", "tables")
 
 # Libraries --------------------------------------------------------------------
 library(raster)
@@ -26,6 +25,8 @@ library(reshape)
 library(doBy)
 library(readstata13)
 library(haven)
+library(ggplot2)
+library(mapproj)
 
 # User Defined Functions -------------------------------------------------------
 source("https://raw.githubusercontent.com/ramarty/rgeos_chunks/master/R/rgeos_chunks.R")
