@@ -26,3 +26,7 @@ library(reshape)
 library(doBy)
 library(readstata13)
 library(haven)
+
+# User Defined Functions -------------------------------------------------------
+source("https://raw.githubusercontent.com/ramarty/rgeos_chunks/master/R/rgeos_chunks.R")
+
