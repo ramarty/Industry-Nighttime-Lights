@@ -2,6 +2,9 @@
 
 # Load Data --------------------------------------------------------------------
 dmspols <- raster(file.path(raw_data_file_path, "Nighttime Lights", "DMSPOLS", "canada_dmspols_2000.tif"))
+canada_gadm <- readRDS(file.path(raw_data_file_path, "GADM", "gadm36_CAN_1_sp.rds")) # %>% gSimplify(tol=.1)
+
+canada_gadm <- crop(canada_gadm, extent(-141.003, -52.65917, 41.67693, 70))
 
 # VIIRS Plot -----------------------------------------------------------------
 dmspols.df <- as(dmspols, "SpatialPixelsDataFrame")
@@ -9,7 +12,10 @@ dmspols.df <- as.data.frame(dmspols.df)
 colnames(dmspols.df) <- c("value", "x", "y") 
 
 dmspols.df$value_adj <- (dmspols.df$value) %>% sqrt %>% sqrt
+dmspols.df <- dmspols.df[dmspols.df$value_adj >= 0.6,]
+
 p <- ggplot() +
+  geom_polygon(data=canada_gadm, aes(x=long, y=lat, group=group), fill="black") +
   geom_tile(data=dmspols.df, aes(x=x,y=y,fill=value_adj)) +
   labs(colour="") +
   coord_equal() +
@@ -21,6 +27,6 @@ p <- ggplot() +
                        na.value = 'black') +
   theme(legend.position = "none") +
   coord_quickmap()
-ggsave(p, filename = file.path(figures_file_path, "canada_dmspols_2000.png"), height=5, width=7)
+ggsave(p, filename = file.path(figures_file_path, "canada_dmspols_2000.png"), height=8, width=12)
 
 
