@@ -55,6 +55,3 @@ saveRDS(hexagon_data, file.path(final_data_file_path, "Canada Industry Data", "h
 
 
 
-
-head(hexagon_data)
-
