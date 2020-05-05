@@ -2,15 +2,22 @@
 
 # Load, Append and Merge Data --------------------------------------------------
 # Load and Append Firm Data
-firmdata_df <- list.files(file.path(raw_data_file_path, "Canada Industry Data", "Firm Data"), 
-                             pattern = "*.dta",
-                             full.names = TRUE) %>%
-  lapply(read_dta) %>%
+firmdata_df <- list.files(file.path(data_file_path, "Canada Industry Data", "RawData", "Firm Data"), 
+                          pattern = "*.dta",
+                          full.names = TRUE
+) %>%
+  lapply(read_dta,                           encoding='latin1') %>%
   bind_rows
 
-# Extract DMSPOLS --------------------------------------------------------------
+# Spatially Define -------------------------------------------------------------
 coordinates(firmdata_df) <- ~lon+lat
 crs(firmdata_df) <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+
+# Export -----------------------------------------------------------------------
+saveRDS(firmdata_df, file.path(data_file_path, "Canada Industry Data", "FinalData", "firms.Rds"))
+
+
+# Extract NTL ------------------------------------------------------------------
 
 for(year in 1992:2013){
   print(year)
