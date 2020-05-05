@@ -8,7 +8,7 @@ EXTRACT_FIRMS_ALL <- T
 EXTRACT_DMSPOLS   <- T
 
 # Load Firm Data --------------------------------------------------------------------
-firms <- readRDS(file.path(data_file_path, "Canada Industry Data", "FinalData", "firms.Rds"))
+firms <- readRDS(file.path(data_file_path, "Canada Industry Data", "FinalData", "firms_clean.Rds"))
 firms <- spTransform(firms, CRS(PROJ_canada))
 firms@data <- firms@data %>%
   mutate(N_firms = 1) %>%
