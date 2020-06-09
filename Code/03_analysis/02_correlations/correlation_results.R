@@ -1,19 +1,28 @@
 # Analysis
 
-# Load Data --------------------------------------------------------------------
-grid <- readRDS(file.path(merged_data_grid, paste0("hex_5km_clean",".Rds")))
+country <- "mexico"
 
-grid <- list.files(merged_data_grid, pattern = "*_clean.Rds", full.names = T) %>%
+if(country %in% "canada"){
+  YEARS <- c("2001", "2003", "2005", "2007", "2009", "2011", "2013", "All")
+  MAX_DIFF <- 6
+}
+
+if(country %in% "mexico"){
+  YEARS <- c("2004", "2009", "2013", "All")
+  MAX_DIFF <- 2
+} 
+
+# Load Data --------------------------------------------------------------------
+grid <- list.files(file.path(project_file_path, "Data", "Grid", "FinalData", country, "merged_datasets"),
+                   pattern = "*_clean.Rds", full.names = T) %>%
   lapply(readRDS) %>%
   bind_rows() %>%
   filter(!is.na(unit)) %>%
   filter(!is.na(dmspol_mean)) %>%
   mutate(unit = unit %>% str_replace_all("hex_", ""))
-grid$unit <- grid$unit 
 
-grid <- grid[(grid$dmspol_mean > 0) | !is.na(grid$employment_mean_all),]
+grid      <- grid[(grid$dmspol_mean > 0) | !is.na(grid$employment_mean_all),]
 grid_non0 <- grid[(grid$dmspol_mean > 0) & !is.na(grid$employment_mean_all),]
-
 
 unit <- "100km"
 transform <- "log"
@@ -26,7 +35,7 @@ df_out_all <- data.frame(NULL)
 # TODO: All element of loop - baseline NTL.
 
 counter <- 1
-for(year in c("2001", "2003", "2005", "2007", "2009", "2011", "2013", "All")){
+for(year in YEARS){
   
   print(year)
   
@@ -34,7 +43,7 @@ for(year in c("2001", "2003", "2005", "2007", "2009", "2011", "2013", "All")){
     for(dmspols_var in c("dmspol_mean")){
       for(firm_var in c("employment_sum_all", "N_firms_sum_all")){
         for(transform in c("level", "log", "g5", "g25", "g50")){
-          for(difference in c("level", paste0("diff",1:6))){
+          for(difference in c("level", paste0("diff",1:MAX_DIFF))){
             
             #### Data Subset
             if(year %in% "All"){
@@ -110,5 +119,5 @@ df_out_all <- df_out_all %>%
                                                      "25 Groups",
                                                      "50 Groups")))
 
-saveRDS(df_out_all, file.path(data_file_path, "Results", "polygon_correlation_results.Rds"))
+saveRDS(df_out_all, file.path(data_file_path, "Results", country, "polygon_correlation_results.Rds"))
 

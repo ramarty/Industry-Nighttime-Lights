@@ -1,32 +1,34 @@
 # Merge Polygon Datasets
 
-## Root dataset names
-grid_files <- list.files(file.path(data_file_path, "Grid", "RawData"), pattern = "*.Rds") %>%
-  str_replace_all(".Rds", "")
+country <- "mexico"
 
-gadm_files <- list.files(file.path(data_file_path, "GADM", "RawData"), pattern = "*.rds") %>%
-  str_replace_all(".rds", "")
-
-for(dataset in grid_files){
+for(dataset_type in c("hex_5km", 
+                      "hex_10km",
+                      "hex_25km",
+                      "hex_50km",
+                      "hex_100km",
+                      "hex_250km",
+                      "hex_500km",
+                      "hex_1000km")){
   
-  print(paste(dataset, "-----------------------------------------------------"))
+  print(paste(dataset_type, "------------------------------------------------"))
   
-  ## Filepaths for (1) raw data (2) individual files and (3) merged files
-  if(grepl("hex", dataset)){
-    RAW_DATA_PATH <- file.path(data_file_path, "Grid", "RawData")
-    IND_DATA_PATH <- file.path(data_file_path, "Grid", "FinalData", "individual_datasets")
-    MERGED_DATA_PATH <- file.path(data_file_path, "Grid", "FinalData", "merged_datasets")
+  #### Filepaths for (1) raw data (2) individual files and (3) merged files
+  if(grepl("hex", dataset_type)){
+    RAW_DATA_PATH <- file.path(data_file_path, "Grid", "RawData", 
+                               paste0(substring(country,1,3),"_", dataset_type,".Rds"))
+    IND_DATA_PATH <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets")
+    MERGED_DATA_PATH <- file.path(data_file_path, "Grid", "FinalData", country, "merged_datasets")
   }
   
-  if(grepl("gadm", dataset)){
+  if(grepl("gadm", dataset_type)){
     RAW_DATA_PATH <- file.path(data_file_path, "GADM", "RawData")
-    IND_DATA_PATH <- file.path(data_file_path, "GADM", "FinalData", "individual_datasets")
-    MERGED_DATA_PATH <- file.path(data_file_path, "GADM", "FinalData", "merged_datasets")
+    IND_DATA_PATH <- file.path(data_file_path, "GADM", "FinalData", country, "individual_datasets")
+    MERGED_DATA_PATH <- file.path(data_file_path, "GADM", "FinalData", country, "merged_datasets")
   }
   
-  ## Raw data coordinates
-  raw_data <- readRDS(file.path(RAW_DATA_PATH, paste0(dataset,".Rds")))
-  #raw_data <- spTransform(raw_data, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+  #### Load and merge data
+  raw_data <- readRDS(RAW_DATA_PATH)
   coords_data <- raw_data %>%
     coordinates() %>%
     as.data.frame() %>%
@@ -36,7 +38,7 @@ for(dataset in grid_files){
   
   ## List of datasets associated with root dataset
   # eg, dataet for firms_all, dmspols, etc
-  data_files <- list.files(IND_DATA_PATH, pattern=paste0("^", dataset), full.names = T) %>%
+  data_files <- list.files(IND_DATA_PATH, pattern=dataset_type, full.names = T) %>%
     lapply(readRDS)
   
   ## Merge datasets
@@ -47,5 +49,9 @@ for(dataset in grid_files){
   data_merged <- merge(data_merged, coords_data, by="id")
   
   ## Export
-  saveRDS(data_merged, file.path(MERGED_DATA_PATH, paste0(dataset, ".Rds")))
+  saveRDS(data_merged, file.path(MERGED_DATA_PATH, paste0(dataset_type, ".Rds")))
+  
 }
+
+
+

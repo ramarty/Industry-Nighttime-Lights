@@ -1,8 +1,10 @@
 
-df_out_all <- readRDS(file.path(data_file_path, "Results", "polygon_correlation_results.Rds"))
+country <- "mexico"
+
+df_out_all <- readRDS(file.path(data_file_path, "Results", country, "polygon_correlation_results.Rds"))
 df_out_all <- df_out_all[df_out_all$difference %in% "level",]
 df_out_all <- df_out_all[!(df_out_all$year %in% "All"),]
-df_out_all$year <- df_out_all$year %>% as.numeric() %>% as.factor()
+df_out_all$year <- df_out_all$year %>% as.factor()
 
 # Export -----------------------------------------------------------------------
 
@@ -50,5 +52,5 @@ p <- ggarrange(p_list[[1]],
                common.legend = T,
                legend = "right",
                ncol = 1) 
-ggsave(p, filename = file.path(figures_file_path, paste0("level_coefs_firmemploy_VS_dmspol_mean.png")), height=12, width=10)
+ggsave(p, filename = file.path(figures_file_path, paste0(country, "_level_coefs_firmemploy_VS_dmspol_mean.png")), height=12, width=10)
 

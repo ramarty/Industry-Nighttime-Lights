@@ -1,5 +1,7 @@
 # Merge Polygon Datasets
 
+country <- "mexico"
+
 ## Root dataset names
 grid_files <- list.files(file.path(data_file_path, "Grid", "FinalData", "merged_datasets"), pattern = "*.Rds") %>%
   str_replace_all(".Rds", "")
@@ -9,17 +11,18 @@ gadm_files <- list.files(file.path(data_file_path, "GADM", "FinalData", "merged_
   str_replace_all(".rds", "")
 gadm_files <- gadm_files[!grepl("clean", gadm_files)]
 
-for(dataset in grid_files){
+
+for(dataset in paste0("hex_",c(5,10,25,50,100,250,500,1000), "km") ){
   
   print(paste(dataset, "-----------------------------------------------------"))
   
   ## Filepaths for (1) raw data (2) individual files and (3) merged files
   if(grepl("hex", dataset)){
-    MERGED_DATA_PATH <- file.path(data_file_path, "Grid", "FinalData", "merged_datasets")
+    MERGED_DATA_PATH <- file.path(data_file_path, "Grid", "FinalData", country, "merged_datasets")
   }
   
   if(grepl("gadm", dataset)){
-    MERGED_DATA_PATH <- file.path(data_file_path, "GADM", "FinalData", "merged_datasets")
+    MERGED_DATA_PATH <- file.path(data_file_path, "GADM", "FinalData", country, "merged_datasets")
   }
   
   # Load Data ------------------------------------------------------------------
@@ -29,6 +32,13 @@ for(dataset in grid_files){
   data$group <- NULL
   data$year_sum_all <- NULL
   data$year_mean_all <- NULL
+  
+  # Firms: If NA, then 0 -------------------------------------------------------
+  firm_vars <- names(data)[grepl("firms|employment", names(data))]
+  
+  for(var in firm_vars){
+    data[[var]][is.na(data[[var]])] <- 0
+  }
   
   # Transform Variables --------------------------------------------------------
   #### Transform
@@ -46,7 +56,10 @@ for(dataset in grid_files){
   #### Add differences  
   merge_vars <- c("id", "year")
   
-  data_diffs_list <- lapply(1:6, function(i){
+  if(country %in% "canada") MAX_DIFF <- 6
+  if(country %in% "mexico") MAX_DIFF <- 2
+  data_diffs_list <- lapply(1:MAX_DIFF, function(i){
+    print(i)
     
     calc_diffi <- function(var) var - lag(var, i)
     
@@ -69,7 +82,7 @@ for(dataset in grid_files){
   
   #### Add other variables
   data$time <- data$year %>% as.factor() %>% as.numeric()
-  data$unit <- dataset %>% str_replace_all(".Rds", "")
+  data$unit <- dataset 
 
   # Export ---------------------------------------------------------------------
   saveRDS(data, file.path(MERGED_DATA_PATH, paste0(dataset, "_clean.Rds")))

@@ -1,7 +1,8 @@
 # Extract DMSP-OLS
 
 # Load Data --------------------------------------------------------------------
-firmdata_df <- readRDS(file.path(final_data_file_path, "Canada Industry Data", "points_data", "firms_points_data.Rds"))
+firmdata_df <- readRDS(file.path(project_file_path, "Data", "Canada Industry Data", "FinalData","firms_clean.Rds"))
+firmdata_df <- firmdata_df@data
 firmdata_df <- firmdata_df[!is.na(firmdata_df$employment),]
 
 #### Round to nearest DMSP-OLS whole numbers

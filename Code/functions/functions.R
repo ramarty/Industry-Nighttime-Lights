@@ -1,20 +1,3 @@
-# Summarize data in polygons
-
-# Take average nighttime lights and firm level data within hexagons and GADM polygons
-
-FIRM_YEARS <- c(2001, 2003, 2005, 2007, 2009, 2011, 2013)
-
-EXTRACT_FIRMS_ALL <- T
-EXTRACT_DMSPOLS   <- T
-
-# Load Firm Data --------------------------------------------------------------------
-firms <- readRDS(file.path(data_file_path, "Canada Industry Data", "FinalData", "firms_clean.Rds"))
-firms <- spTransform(firms, CRS(PROJ_canada))
-firms@data <- firms@data %>%
-  mutate(N_firms = 1) %>%
-  dplyr::select(employment, N_firms, year)
-firms <- spTransform(firms, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
-
 # Extraction Functions ---------------------------------------------------------
 extract_firm_stats <- function(year, polygon, firms, firm_name_suffix){
   
@@ -51,11 +34,24 @@ extract_firm_stats <- function(year, polygon, firms, firm_name_suffix){
   return(polygon_OVER_firm)
 }
 
-extract_dmspols <- function(year, polygon){
+extract_dmspols <- function(year, polygon, country){
   print(paste(year, "------------------------------------------------------"))
   
-  dmspols <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("canada_dmspols_",year,".tif")))
+  year_dmspols <- year
   
+  # accounting for mexico in 2014
+  if(year_dmspols > 2013){
+    year_dmspols <- 2013
+  }
+  
+  if(country %in% "canada"){
+    dmspols <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("canada_dmspols_",year_dmspols,".tif")))
+  }
+  
+  if(country %in% "mexico"){
+    dmspols <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("mexico_dmspols_",year_dmspols,".tif")))
+  }
+
   if(nrow(polygon) == 1){
     polygon$dmspols_mean <- mean(dmspols[], na.rm=T)
     polygon$dmspols_median <- median(dmspols[], na.rm=T)
@@ -95,56 +91,49 @@ extract_firms_dmspols <- function(polygon, firms, firm_name_suffix){
   return(polygon_data)
 }
 
-# Extract Data -----------------------------------------------------------------
-#### Dataset names
-grid_files <- list.files(file.path(data_file_path, "Grid", "RawData"), pattern = "*.Rds") %>%
-  str_replace_all(".Rds", "")
-
-gadm_files <- list.files(file.path(data_file_path, "GADM", "RawData"), pattern = "*.rds") %>%
-  str_replace_all(".rds", "")
-
-#### Loop through datasets and process
-for(dataset in c(grid_files,
-                 gadm_files)){
+# Creating Hexagons ------------------------------------------------------------
+st_intersects_chunks <- function(sdf1, sdf2, chunk_size){
   
-  print(paste(dataset, "-----------------------------------------------------"))
+  starts <- seq(from=1,to=nrow(sdf1),by=chunk_size)
   
-  #### Load Data
-  # 1. Make sure in WGS84 CRS
-  # 2. Add a group variable - velox done in "group" chunks.
-  if(grepl("hex", dataset)){
-    polygon <- readRDS(file.path(data_file_path, "Grid", "RawData", paste0(dataset, ".Rds")))
-    polygon <- spTransform(polygon, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
-    polygon$group <- 1
-    
-    OUT_PATH <- file.path(data_file_path, "Grid", "FinalData", "individual_datasets")
+  st_intersects_i <- function(start, sdf1, sdf2, chunk_size){
+    end <- min(start + chunk_size - 1, nrow(sdf1))
+    out_i <- st_intersects(sdf1[start:end,], sdf2) %>% as.numeric()
+    print(start)
+    return(out_i)
   }
   
-  if(grepl("gadm", dataset)){
-    polygon <- readRDS(file.path(data_file_path, "GADM", "RawData", paste0(dataset, ".Rds")))
-    polygon$id <- 1:nrow(polygon)
-    
-    if(dataset %in% c("gadm36_CAN_0_sp")) polygon$group <- polygon$NAME_0
-    if(dataset %in% c("gadm36_CAN_1_sp")) polygon$group <- polygon$NAME_1
-    if(dataset %in% c("gadm36_CAN_2_sp", "gadm36_CAN_3_sp")) polygon$group <- polygon$NAME_1
-    
-    OUT_PATH <- file.path(data_file_path, "GADM", "FinalData", "individual_datasets")
-  }
+  out <- lapply(starts, st_intersects_i, sdf1, sdf2, chunk_size) %>% unlist %>% as.numeric
   
-  #### All Firms
-  if(EXTRACT_FIRMS_ALL){
-    polygon_firms_all   <- lapply(FIRM_YEARS, extract_firm_stats, polygon, firms, "_all") %>% bind_rows()
-    saveRDS(polygon_firms_all, file.path(OUT_PATH, paste0(dataset,"_firms_all",".Rds")))
-  }
-  
-  #### DMSPOLS
-  if(EXTRACT_DMSPOLS){
-    polygon_dmspols <- lapply(FIRM_YEARS, extract_dmspols, polygon) %>% bind_rows()
-    saveRDS(polygon_dmspols, file.path(OUT_PATH, paste0(dataset,"_dmspols",".Rds")))
-  }
-  
-  
+  return(out)
 }
 
-
+create_hexagons <- function(spdf, cellsize, keep_inter_coord, coords_buff_agg_sf){
+  
+  # Ensures hexagons cover whole area. If don't buffer, some areas might be 
+  # left out due to irregular shapes
+  spdf <- gBuffer_chunks(spdf, cellsize*1.25, 5000)
+  
+  hexagons <- spsample(spdf, type="hexagonal", cellsize=cellsize)
+  HexPols <- HexPoints2SpatialPolygons(hexagons)
+  HexPols$id <- 1:length(HexPols)
+  
+  if(keep_inter_coord){
+    HexPols_sf <- HexPols %>% st_as_sf()
+    
+    print(paste(nrow(HexPols_sf), "----"))
+    
+    #inter <- lapply(1:nrow(HexPols_sf), function(i){
+    #  print(i)
+    #  st_intersects(HexPols_sf[i,], coords_buff_agg_sf) %>% as.numeric()
+    #}) %>% unlist()
+    
+    inter <- st_intersects_chunks(HexPols_sf, coords_buff_agg_sf, 150)
+    
+    HexPols_sf <- HexPols_sf[inter %in% 1,]
+    HexPols <- HexPols_sf %>% as("Spatial")
+  }
+  
+  return(HexPols)
+}
 
