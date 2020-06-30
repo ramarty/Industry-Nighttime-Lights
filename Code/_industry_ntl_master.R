@@ -49,6 +49,7 @@ library(spgwr)
 library(broom)
 library(viridis)
 library(stargazer)
+library(labelled)
 
 # User Defined Functions -------------------------------------------------------
 source("https://raw.githubusercontent.com/ramarty/fast-functions/master/R/functions_in_chunks.R")

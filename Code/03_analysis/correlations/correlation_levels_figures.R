@@ -6,6 +6,8 @@ df_out_all <- df_out_all[df_out_all$difference %in% "level",]
 df_out_all <- df_out_all[!(df_out_all$year %in% "All"),]
 df_out_all$year <- df_out_all$year %>% as.factor()
 
+N_colors <- df_out_all$year %>% unique() %>% length()
+
 # Export -----------------------------------------------------------------------
 
 p_list <- list()
@@ -13,7 +15,7 @@ p_list <- list()
 i <- 1
 for(firm_var in unique(df_out_all$firm_var)){
   
-  if(firm_var %in% "N_firms_sum_all"){
+  if(firm_var %in% "firms_sum_all"){
     title <- "Number of Firms"
   }
   
@@ -37,7 +39,7 @@ for(firm_var in unique(df_out_all$firm_var)){
          color = "Year") +
     guides(color = guide_legend(reverse=T)) +
     #theme_minimal() +
-    scale_color_manual(values = wes_palette("Zissou1", 7, type = "continuous")) +
+    scale_color_manual(values = wes_palette("Zissou1", N_colors, type = "continuous")) +
     theme(plot.title = element_text(hjust = 0.5, face = "bold")) +
     facet_wrap(~transform, 
                scales = "free_x",

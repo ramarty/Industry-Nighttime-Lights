@@ -1,5 +1,7 @@
 # Analysis
 
+country <- "canada"
+
 # Load Data --------------------------------------------------------------------
 grid <- readRDS(file.path(merged_data_grid, paste0("hex_10km_clean",".Rds")))
 #gadm <- readRDS(file.path(data_file_path, "GADM", "FinalData", paste0("gadm36_CAN_0_sp",".Rds")))
@@ -24,7 +26,7 @@ p <- ggplot(data = grid_non0,
   facet_wrap(~unit,
              nrow = 2,
              scales = "free") 
-ggsave(p, filename = file.path(figures_file_path, "employlog_ntllog_scatter.png"), height=6, width=10)
+ggsave(p, filename = file.path(figures_file_path, paste0(country, "_employlog_ntllog_scatter.png")), height=6, width=10)
 
 
 

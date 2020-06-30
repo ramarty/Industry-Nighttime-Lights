@@ -2,16 +2,6 @@
 
 country <- "mexico"
 
-## Root dataset names
-grid_files <- list.files(file.path(data_file_path, "Grid", "FinalData", "merged_datasets"), pattern = "*.Rds") %>%
-  str_replace_all(".Rds", "")
-grid_files <- grid_files[!grepl("clean", grid_files)]
-
-gadm_files <- list.files(file.path(data_file_path, "GADM", "FinalData", "merged_datasets"), pattern = "*.rds") %>%
-  str_replace_all(".rds", "")
-gadm_files <- gadm_files[!grepl("clean", gadm_files)]
-
-
 for(dataset in paste0("hex_",c(5,10,25,50,100,250,500,1000), "km") ){
   
   print(paste(dataset, "-----------------------------------------------------"))
@@ -28,10 +18,37 @@ for(dataset in paste0("hex_",c(5,10,25,50,100,250,500,1000), "km") ){
   # Load Data ------------------------------------------------------------------
   data <- readRDS(file.path(MERGED_DATA_PATH, paste0(dataset, ".Rds")))
   
+  # Always NA or 0? Only include cells that have positive light or a firm
+  # at some point
+  data <- data %>%
+    group_by(id) %>%
+    mutate(firms_sum_all_SUM_ID = sum(firms_sum_all, na.rm=T),
+           dmspol_sum_SUM_ID = sum(dmspol_sum, na.rm=T)) %>%
+    ungroup()
+
+  data <- data[data$dmspol_sum_SUM_ID > 0 & data$firms_sum_all_SUM_ID > 0,]
+  data$firms_sum_all_SUM_ID <- NULL
+  data$dmspol_sum_SUM_ID <- NULL
+  
   #### Remove unneeded variables
-  data$group <- NULL
-  data$year_sum_all <- NULL
-  data$year_mean_all <- NULL
+  #data$group <- NULL
+  #data$year_sum_all <- NULL
+  #data$year_mean_all <- NULL
+  
+  gen_var_to_rm <- c("group")
+  dmsp_var_to_rm <- names(data)[grepl("dmspols", names(data)) & grepl("_t", names(data))]
+  naics2_var_to_rm <- names(data)[grepl("^naics2_", names(data))]
+  firmsmean_var_to_rm <- names(data)[grepl("firms_mean", names(data))] # only need sum
+  employmean_var_to_rm <- names(data)[grepl("employment_mean", names(data))] # only need sum (for now?)
+  
+  vars_to_rm <- c(gen_var_to_rm,
+                 dmsp_var_to_rm,
+                 naics2_var_to_rm,
+                 firmsmean_var_to_rm,
+                 employmean_var_to_rm)
+  
+  data <- data %>%
+    dplyr::select(-all_of(vars_to_rm))
   
   # Firms: If NA, then 0 -------------------------------------------------------
   firm_vars <- names(data)[grepl("firms|employment", names(data))]
@@ -47,9 +64,9 @@ for(dataset in paste0("hex_",c(5,10,25,50,100,250,500,1000), "km") ){
   for(var in variables){
     data[[paste0(var, "_log")]] <- log(data[[var]] + 1)
     data[[paste0(var, "_g5")]] <- data[[var]] %>% cut2(g = 5) %>% as.numeric()
-    data[[paste0(var, "_g10")]] <- data[[var]] %>% cut2(g = 10) %>% as.numeric()
-    data[[paste0(var, "_g25")]] <- data[[var]] %>% cut2(g = 25) %>% as.numeric()
-    data[[paste0(var, "_g50")]] <- data[[var]] %>% cut2(g = 50) %>% as.numeric()
+    #data[[paste0(var, "_g10")]] <- data[[var]] %>% cut2(g = 10) %>% as.numeric()
+    #data[[paste0(var, "_g25")]] <- data[[var]] %>% cut2(g = 25) %>% as.numeric()
+    #data[[paste0(var, "_g50")]] <- data[[var]] %>% cut2(g = 50) %>% as.numeric()
   }
   
 

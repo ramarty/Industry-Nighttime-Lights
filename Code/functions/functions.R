@@ -4,8 +4,16 @@ extract_firm_stats <- function(year, polygon, firms, firm_name_suffix){
   #### Where are we?
   print(paste(year, "------------------------------------------------------"))
   
+  #### Remove character variables
+  for(var in names(firms)){
+    if(is.character(firms[[var]][1])){
+      firms[[var]] <- NULL
+    }
+  }
+  
   #### Grab firm data in year i
   firms_i <- firms[firms$year %in% year,]
+  firms_i$year <- NULL # don't need to aggregate year variable
   
   #### Country Level
   if(nrow(polygon) %in% 1){

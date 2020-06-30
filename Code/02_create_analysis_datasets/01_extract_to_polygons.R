@@ -2,34 +2,39 @@
 
 # Take average nighttime lights and firm level data within hexagons and GADM polygons
 
-source("~/Documents/Github/Industry-Nighttime-Lights/Code/_industry_ntl_master.R")
+country <- "canada"
 
-FIRM_YEARS <- c(2004, 2009, 2014)
+if(country %in% "canada"){
+  FIRM_YEARS <- c(2001, 2003, 2005, 2007, 2009, 2011, 2013)
+}
+
+if(country %in% "mexico"){
+  FIRM_YEARS <- c(2004, 2009, 2014)
+}
+
 
 EXTRACT_FIRMS_ALL <- T
+EXTRACT_FIRMS_CATEGORIES <- T
 EXTRACT_DMSPOLS   <- T
 
 # Load Firm Data --------------------------------------------------------------------
-firms <- readRDS(file.path(data_file_path, "Mexico Industry Data", "FinalData", "firms_clean.Rds"))
-firms <- spTransform(firms, CRS(PROJ_canada))
-firms@data <- firms@data %>%
-  mutate(N_firms = 1) %>%
-  dplyr::select(employment, N_firms, year)
-firms <- spTransform(firms, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+firms <- readRDS(file.path(data_file_path, paste0(capitalize(country), " Industry Data"), "FinalData", "firms_clean.Rds"))
+firms$firms <- 1 # when aggregating, counts total number of firms in area
+#firms <- spTransform(firms, CRS(PROJ_canada))
+#firms <- spTransform(firms, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
 
 # Extract Data -----------------------------------------------------------------
 #### Dataset names
 grid_files <- list.files(file.path(data_file_path, "Grid", "RawData"), pattern = "*.Rds") %>%
   str_replace_all(".Rds", "") %>%
-  str_subset("mex") 
+  str_subset(country %>% substring(1,3)) # "can" or "mex"
 
 gadm_files <- list.files(file.path(data_file_path, "GADM", "RawData"), pattern = "*.rds") %>%
   str_replace_all(".rds", "") %>%
-  str_subset("MEX")
+  str_subset(country %>% substring(1,3) %>% toupper()) # "CAN" or "MEX"
 
 #### Loop through datasets and process
-for(dataset in c(grid_files,
-                 gadm_files)){
+for(dataset in c(grid_files)){ # gadm_files
   
   print(paste(dataset, "-----------------------------------------------------"))
   
@@ -41,7 +46,7 @@ for(dataset in c(grid_files,
     polygon <- spTransform(polygon, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
     polygon$group <- 1
     
-    OUT_PATH <- file.path(data_file_path, "Grid", "FinalData", "mexico", "individual_datasets")
+    OUT_PATH <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets")
   }
   
   if(grepl("gadm", dataset)){
@@ -52,7 +57,7 @@ for(dataset in c(grid_files,
     if(dataset %in% c("gadm36_CAN_1_sp")) polygon$group <- polygon$NAME_1
     if(dataset %in% c("gadm36_CAN_2_sp", "gadm36_CAN_3_sp")) polygon$group <- polygon$NAME_1
     
-    OUT_PATH <- file.path(data_file_path, "GADM", "FinalData", "mexico", "individual_datasets")
+    OUT_PATH <- file.path(data_file_path, "GADM", "FinalData", country, "individual_datasets")
   }
   
   #### All Firms
@@ -61,9 +66,22 @@ for(dataset in c(grid_files,
     saveRDS(polygon_firms_all, file.path(OUT_PATH, paste0(dataset,"_firms_all",".Rds")))
   }
   
+  #### Firm Categories
+  if(EXTRACT_FIRMS_CATEGORIES){
+    
+    type_codes <- firms$naics2 %>% unique()
+    
+    for(type_i in type_codes){
+      print(paste("type:", type_i, "-----------------------------------------"))
+      polygon_firms_typei   <- lapply(FIRM_YEARS, extract_firm_stats, polygon, firms[firms$naics2 %in% type_i,], paste0("_t",type_i)) %>% bind_rows()
+      saveRDS(polygon_firms_typei, file.path(OUT_PATH, paste0(dataset,"_firms_t",type_i,".Rds")))
+    }
+    
+  }
+  
   #### DMSPOLS
   if(EXTRACT_DMSPOLS){
-    polygon_dmspols <- lapply(FIRM_YEARS, extract_dmspols, polygon, "mexico") %>% bind_rows()
+    polygon_dmspols <- lapply(FIRM_YEARS, extract_dmspols, polygon, country) %>% bind_rows()
     saveRDS(polygon_dmspols, file.path(OUT_PATH, paste0(dataset,"_dmspols",".Rds")))
   }
   

@@ -33,5 +33,5 @@ firmdata_df$dmspols[firmdata_df$year %in% 2013] <- firmdata_df$dmspols_2013[firm
 
 # Export -----------------------------------------------------------------------
 #firmdata_df <- as.data.frame(firmdata_df)
-saveRDS(firmdata_df, file.path(data_file_path, "Canada Industry Data", "FinalData", "firms_clean.Rds"))
+saveRDS(firmdata_df, file.path(data_file_path, "Canada Industry Data", "FinalData", "firms.Rds"))
 

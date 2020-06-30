@@ -8,21 +8,33 @@ if(country %in% "canada"){
 }
 
 if(country %in% "mexico"){
-  YEARS <- c("2004", "2009", "2013", "All")
+  YEARS <- c("2004", "2009", "2014", "All")
   MAX_DIFF <- 2
 } 
 
 # Load Data --------------------------------------------------------------------
+readRDS_excludevars <- function(filepath){
+  # Exclude variables by category
+  df <- readRDS(filepath)
+  rm_vars <- names(df)[str_detect(names(df), "t([[:digit:]])([[:digit:]])")]
+  
+  df <- df %>%
+    dplyr::select(-all_of(rm_vars))
+  
+  return(df)
+}
+
+
 grid <- list.files(file.path(project_file_path, "Data", "Grid", "FinalData", country, "merged_datasets"),
                    pattern = "*_clean.Rds", full.names = T) %>%
-  lapply(readRDS) %>%
+  lapply(readRDS_excludevars) %>%
   bind_rows() %>%
   filter(!is.na(unit)) %>%
   filter(!is.na(dmspol_mean)) %>%
   mutate(unit = unit %>% str_replace_all("hex_", ""))
 
-grid      <- grid[(grid$dmspol_mean > 0) | !is.na(grid$employment_mean_all),]
-grid_non0 <- grid[(grid$dmspol_mean > 0) & !is.na(grid$employment_mean_all),]
+grid      <- grid[(grid$dmspol_mean > 0) | !is.na(grid$employment_sum_all),]
+grid_non0 <- grid[(grid$dmspol_mean > 0) & !is.na(grid$employment_sum_all),]
 
 unit <- "100km"
 transform <- "log"
@@ -41,9 +53,10 @@ for(year in YEARS){
   
   for(unit in unique(grid_non0$unit)){
     for(dmspols_var in c("dmspol_mean")){
-      for(firm_var in c("employment_sum_all", "N_firms_sum_all")){
-        for(transform in c("level", "log", "g5", "g25", "g50")){
+      for(firm_var in c("employment_sum_all", "firms_sum_all")){
+        for(transform in c("level", "log", "g5", "g25")){
           for(difference in c("level", paste0("diff",1:MAX_DIFF))){
+            
             
             #### Data Subset
             if(year %in% "All"){
