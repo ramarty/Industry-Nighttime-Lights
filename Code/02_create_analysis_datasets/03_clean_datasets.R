@@ -1,6 +1,6 @@
 # Merge Polygon Datasets
 
-country <- "mexico"
+country <- "canada"
 
 for(dataset in paste0("hex_",c(5,10,25,50,100,250,500,1000), "km") ){
   
@@ -26,7 +26,7 @@ for(dataset in paste0("hex_",c(5,10,25,50,100,250,500,1000), "km") ){
            dmspol_sum_SUM_ID = sum(dmspol_sum, na.rm=T)) %>%
     ungroup()
 
-  data <- data[data$dmspol_sum_SUM_ID > 0 & data$firms_sum_all_SUM_ID > 0,]
+  data <- data[data$dmspol_sum_SUM_ID > 0 | data$firms_sum_all_SUM_ID > 0,] # could try &
   data$firms_sum_all_SUM_ID <- NULL
   data$dmspol_sum_SUM_ID <- NULL
   
@@ -81,10 +81,10 @@ for(dataset in paste0("hex_",c(5,10,25,50,100,250,500,1000), "km") ){
     calc_diffi <- function(var) var - lag(var, i)
     
     data_diffi <- data %>%
-      arrange(year) %>%
-      group_by(id) %>%
-      mutate_at(vars(-id, -year), calc_diffi) %>%
-      ungroup() %>%
+      dplyr::arrange(year) %>%
+      dplyr::group_by(id) %>%
+      dplyr::mutate_at(vars(-id, -year), calc_diffi) %>%
+      dplyr::ungroup() %>%
       dplyr::select(-lat, -lon)
     
     names(data_diffi)[!(names(data_diffi) %in% merge_vars)] <- 

@@ -1,6 +1,6 @@
 # Analysis
 
-country <- "mexico"
+country <- "canada"
 
 if(country %in% "canada"){
   YEARS <- c("2001", "2003", "2005", "2007", "2009", "2011", "2013", "All")
@@ -56,7 +56,6 @@ for(year in YEARS){
       for(firm_var in c("employment_sum_all", "firms_sum_all")){
         for(transform in c("level", "log", "g5", "g25")){
           for(difference in c("level", paste0("diff",1:MAX_DIFF))){
-            
             
             #### Data Subset
             if(year %in% "All"){

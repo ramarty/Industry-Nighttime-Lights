@@ -50,6 +50,7 @@ library(broom)
 library(viridis)
 library(stargazer)
 library(labelled)
+library(estimatr)
 
 # User Defined Functions -------------------------------------------------------
 source("https://raw.githubusercontent.com/ramarty/fast-functions/master/R/functions_in_chunks.R")

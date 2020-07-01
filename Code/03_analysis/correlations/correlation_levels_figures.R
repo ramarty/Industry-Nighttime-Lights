@@ -53,6 +53,12 @@ p <- ggarrange(p_list[[1]],
                p_list[[2]],
                common.legend = T,
                legend = "right",
-               ncol = 1) 
-ggsave(p, filename = file.path(figures_file_path, paste0(country, "_level_coefs_firmemploy_VS_dmspol_mean.png")), height=12, width=10)
+               ncol = 2)
+
+p_title <- annotate_figure(p,
+                     top = text_grob(country %>% tools::toTitleCase(), color = "black", face = "bold", size = 16) )
+
+
+
+ggsave(p_title, filename = file.path(figures_file_path, paste0(country, "_level_coefs_firmemploy_VS_dmspol_mean.png")), height=5, width=15)
 
