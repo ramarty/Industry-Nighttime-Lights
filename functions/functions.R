@@ -32,6 +32,8 @@ extract_firm_stats <- function(year, polygon, path_to_firm_dir, naics2_i, firm_n
   if(nrow(polygon) %in% 1){
     
     polygon_OVER_firm_mean <- apply(firms_i@data, 2, mean, na.rm=T) %>% t %>% as.data.frame()
+    
+    firms_i$N_firms <- 1
     polygon_OVER_firm_sum <- apply(firms_i@data, 2, sum, na.rm=T) %>% t %>% as.data.frame()
     
     polygon_OVER_firm_mean$year <- NULL

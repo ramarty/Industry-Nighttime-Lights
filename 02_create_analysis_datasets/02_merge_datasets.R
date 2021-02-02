@@ -1,6 +1,6 @@
 # Merge Polygon Datasets
 
-country <- "canada"
+country <- "mexico"
 
 for(dataset_type in c("hex_5km", 
                       "hex_10km",
