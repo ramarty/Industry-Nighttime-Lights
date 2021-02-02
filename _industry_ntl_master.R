@@ -8,11 +8,11 @@ if(Sys.info()[["user"]] == "robmarty") project_file_path <- "~/Dropbox/World Ban
 if(Sys.info()[["user"]] == "WB521633") github_file_path <- "C:/Users/wb521633/Documents/Github/Industry-Nighttime-Lights"
 if(Sys.info()[["user"]] == "robmarty") github_file_path <- "~/Documents/Github/Industry-Nighttime-Lights"
 
-data_file_path <- file.path(project_file_path, "Data")
-raw_data_file_path <- file.path(project_file_path, "Data", "RawData")
+data_file_path       <- file.path(project_file_path, "Data")
+raw_data_file_path   <- file.path(project_file_path, "Data", "RawData")
 final_data_file_path <- file.path(project_file_path, "Data", "FinalData")
-figures_file_path <- file.path(project_file_path, "Paper", "figures")
-tables_file_path <- file.path(project_file_path, "Paper", "tables")
+figures_file_path    <- file.path(project_file_path, "Paper", "figures")
+tables_file_path     <- file.path(project_file_path, "Paper", "tables")
 
 merged_data_grid <- file.path(data_file_path, "Grid", "FinalData", "merged_datasets")
 merged_data_gadm <- file.path(data_file_path, "GADM", "FinalData", "merged_datasets")
@@ -51,8 +51,9 @@ library(viridis)
 library(stargazer)
 library(labelled)
 library(estimatr)
+library(readr)
 
 # User Defined Functions -------------------------------------------------------
 source("https://raw.githubusercontent.com/ramarty/fast-functions/master/R/functions_in_chunks.R")
-source(file.path(github_file_path, "Code", "functions", "functions.R"))
+source(file.path(github_file_path, "functions", "functions.R"))
 
