@@ -1,19 +1,32 @@
 # Extraction Functions ---------------------------------------------------------
-extract_firm_stats <- function(year, polygon, firms, firm_name_suffix){
+extract_firm_stats <- function(year, polygon, path_to_firm_dir, naics2_i, firm_name_suffix){
   
   #### Where are we?
   print(paste(year, "------------------------------------------------------"))
   
+  #### Load Data
+  firms_i <- readRDS(file.path(path_to_firm_dir, paste0("firms_", year, ".Rds")))
+  if(!is.null(naics2_i)) firms_i <- firms_i[firms_i$naics2 %in% naics2_i,]
+  
+  # Remove all variables don't need to aggregate
+  firms_i$id <- NULL
+  firms_i$naics2 <- NULL
+  firms_i$naicsname <- NULL
+  firms_i$dmspols <- NULL
+  firms_i$viirs <- NULL
+  firms_i$viirs_lead <- NULL
+  firms_i$year <- NULL
+  
   #### Remove character variables
-  for(var in names(firms)){
-    if(is.character(firms[[var]][1])){
-      firms[[var]] <- NULL
+  for(var in names(firms_i)){
+    if(is.character(firms_i[[var]][1])){
+      firms_i[[var]] <- NULL
     }
   }
   
   #### Grab firm data in year i
-  firms_i <- firms[firms$year %in% year,]
-  firms_i$year <- NULL # don't need to aggregate year variable
+  #firms_i <- firms[firms$year %in% year,]
+  #firms_i$year <- NULL # don't need to aggregate year variable
   
   #### Country Level
   if(nrow(polygon) %in% 1){
@@ -42,28 +55,45 @@ extract_firm_stats <- function(year, polygon, firms, firm_name_suffix){
   return(polygon_OVER_firm)
 }
 
-extract_dmspols <- function(year, polygon, country){
+extract_ntl <- function(year, polygon, country, ntl_type){
   print(paste(year, "------------------------------------------------------"))
   
-  year_dmspols <- year
+  year_ntl <- year
   
-  # accounting for mexico in 2014
-  if(year_dmspols > 2013){
-    year_dmspols <- 2013
+  if(ntl_type %in% "dmspols"){
+    # accounting for mexico in 2014
+    if(year_ntl > 2013){
+      year_ntl <- 2013
+    }
   }
   
-  if(country %in% "canada"){
-    dmspols <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("canada_dmspols_",year_dmspols,".tif")))
+  if(ntl_type %in% c("viirs", "viirs_corrected")){
+    # accounting for mexico in 2014
+    if(year_ntl < 2012){
+      year_ntl <- 2012
+    }
   }
   
-  if(country %in% "mexico"){
-    dmspols <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("mexico_dmspols_",year_dmspols,".tif")))
+  if(ntl_type %in% "dmspols"){
+    ntl_r <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", 
+                              paste0(country,"_dmspols_",year_ntl,".tif")))
   }
-
+  
+  if(ntl_type %in% "viirs"){
+    ntl_r <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", 
+                              paste0(country %>% substr(1,3),"_viirs_mean_",year_ntl,".tif")))
+  }
+  
+  if(ntl_type %in% "viirs_corrected"){
+    ntl_r <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", 
+                              paste0(country %>% substr(1,3),"_viirs_corrected_mean_",year_ntl,".tif")))
+  }
+  
+  
   if(nrow(polygon) == 1){
-    polygon$dmspols_mean <- mean(dmspols[], na.rm=T)
-    polygon$dmspols_median <- median(dmspols[], na.rm=T)
-    polygon$dmspols_sum <- sum(dmspols[], na.rm=T)
+    polygon$ntl_mean   <- mean(ntl_r[], na.rm=T)
+    polygon$ntl_median <- median(ntl_r[], na.rm=T)
+    polygon$ntl_sum    <- sum(ntl_r[], na.rm=T)
     
     polygon_data <- polygon@data
   } else{
@@ -73,11 +103,11 @@ extract_dmspols <- function(year, polygon, country){
       print(paste("velox", i))
       
       polygon_i <- polygon[polygon$group %in% i,]
-      dmspols_i <- dmspols %>% crop(polygon_i) %>% velox()
+      ntl_r_i   <- ntl_r %>% crop(polygon_i) %>% velox()
       
-      polygon_i$dmspol_mean <- dmspols_i$extract(sp=polygon_i, fun = function(x) mean(x, na.rm=T), small=T) %>% as.vector()
-      polygon_i$dmspol_median <- dmspols_i$extract(sp=polygon_i, fun = function(x) median(x, na.rm=T), small=T) %>% as.vector()
-      polygon_i$dmspol_sum <- dmspols_i$extract(sp=polygon_i, fun = function(x) sum(x, na.rm=T), small=T) %>% as.vector()
+      polygon_i$ntl_mean   <- ntl_r_i$extract(sp=polygon_i, fun = function(x) mean(x, na.rm=T), small=T) %>% as.vector()
+      polygon_i$ntl_median <- ntl_r_i$extract(sp=polygon_i, fun = function(x) median(x, na.rm=T), small=T) %>% as.vector()
+      polygon_i$ntl_sum    <- ntl_r_i$extract(sp=polygon_i, fun = function(x) sum(x, na.rm=T), small=T) %>% as.vector()
       
       return(polygon_i@data)
     }) %>%
@@ -86,6 +116,10 @@ extract_dmspols <- function(year, polygon, country){
   }
   
   polygon_data$year <- year
+  
+  names(polygon_data)[names(polygon_data) %in% "ntl_mean"]   <- paste0(ntl_type, "_mean")
+  names(polygon_data)[names(polygon_data) %in% "ntl_median"] <- paste0(ntl_type, "_median")
+  names(polygon_data)[names(polygon_data) %in% "ntl_sum"]    <- paste0(ntl_type, "_sum")
   
   return(polygon_data)
 }

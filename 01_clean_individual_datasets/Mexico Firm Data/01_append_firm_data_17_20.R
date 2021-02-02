@@ -6,9 +6,10 @@ firmdata_17 <- file.path(data_file_path, "Mexico Industry Data", "RawData", "DEN
              full.names = T,
              recursive = T) %>%
   str_subset("conjunto_de_datos") %>%
+  #head(2) %>%
   lapply(function(f){
     df <- read_csv(f) %>%
-      dplyr::select(codigo_act, per_ocu, latitud, longitud)
+      dplyr::select(id, codigo_act, per_ocu, latitud, longitud)
     return(df)
   }) %>%
   bind_rows() %>%
@@ -19,9 +20,10 @@ firmdata_18 <- file.path(data_file_path, "Mexico Industry Data", "RawData", "DEN
              full.names = T,
              recursive = T) %>%
   str_subset("conjunto_de_datos") %>%
+  #head(2) %>%
   lapply(function(f){
     df <- read_csv(f) %>%
-      dplyr::select(codigo_act, per_ocu, latitud, longitud)
+      dplyr::select(id, codigo_act, per_ocu, latitud, longitud)
     return(df)
   }) %>%
   bind_rows() %>%
@@ -31,22 +33,25 @@ firmdata_18 <- file.path(data_file_path, "Mexico Industry Data", "RawData", "DEN
 firmdata_19 <- file.path(data_file_path, "Mexico Industry Data", "RawData", "DENUE 2019", "denue_ce") %>%
   list.files(pattern = "*.csv", 
              full.names = T) %>%
+  #head(2) %>%
   lapply(function(f){
     df <- read_csv(f) %>%
-      dplyr::select(codigo_act, per_ocu, latitud, longitud) # TODO: Also grab variable that indicates exact number of employees
+      dplyr::select(id, codigo_act, per_ocu, latitud, longitud, H001A) 
     return(df)
   }) %>%
   bind_rows() %>%
-  dplyr::mutate(year = 2019) 
+  dplyr::mutate(year = 2019) %>%
+  dplyr::rename(employment = H001A)
 
 firmdata_20 <- file.path(data_file_path, "Mexico Industry Data", "RawData", "DENUE 2020") %>%
   list.files(pattern = "*.csv", 
              full.names = T,
              recursive = T) %>%
   str_subset("conjunto_de_datos") %>%
+  #head(2) %>%
   lapply(function(f){
     df <- read_csv(f) %>%
-      dplyr::select(codigo_act, per_ocu, latitud, longitud)
+      dplyr::select(id, codigo_act, per_ocu, latitud, longitud)
     return(df)
   }) %>%
   bind_rows() %>%
@@ -87,17 +92,34 @@ crs(firmdata_df) <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs
 
 # Extract VIIRS ----------------------------------------------------------------
 firmdata_df$viirs <- NA
-viirs_17 <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("mex_viirs_mean_",2017,".tif")))
-viirs_18 <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("mex_viirs_mean_",2018,".tif")))
-viirs_19 <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("mex_viirs_mean_",2019,".tif")))
-viirs_20 <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("mex_viirs_mean_",2020,".tif")))
+viirs_17 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_mean_",2017,".tif")))
+viirs_18 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_mean_",2018,".tif")))
+viirs_19 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_mean_",2019,".tif")))
+viirs_20 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_mean_",2020,".tif")))
 
 firmdata_df$viirs[firmdata_df$year %in% 2017] <- extract(viirs_17, firmdata_df[firmdata_df$year %in% 2017,]) %>% as.numeric()
 firmdata_df$viirs[firmdata_df$year %in% 2018] <- extract(viirs_18, firmdata_df[firmdata_df$year %in% 2018,]) %>% as.numeric()
 firmdata_df$viirs[firmdata_df$year %in% 2019] <- extract(viirs_19, firmdata_df[firmdata_df$year %in% 2019,]) %>% as.numeric()
 firmdata_df$viirs[firmdata_df$year %in% 2020] <- extract(viirs_20, firmdata_df[firmdata_df$year %in% 2020,]) %>% as.numeric()
 
+# Extract VIIRS - Corrected ----------------------------------------------------
+firmdata_df$viirs_corrected <- NA
+viirs_17c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_corrected_mean_",2017,".tif")))
+viirs_18c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_corrected_mean_",2018,".tif")))
+viirs_19c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_corrected_mean_",2019,".tif")))
+viirs_20c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_corrected_mean_",2020,".tif")))
+
+firmdata_df$viirs_corrected[firmdata_df$year %in% 2017] <- extract(viirs_17c, firmdata_df[firmdata_df$year %in% 2017,]) %>% as.numeric()
+firmdata_df$viirs_corrected[firmdata_df$year %in% 2018] <- extract(viirs_18c, firmdata_df[firmdata_df$year %in% 2018,]) %>% as.numeric()
+firmdata_df$viirs_corrected[firmdata_df$year %in% 2019] <- extract(viirs_19c, firmdata_df[firmdata_df$year %in% 2019,]) %>% as.numeric()
+firmdata_df$viirs_corrected[firmdata_df$year %in% 2020] <- extract(viirs_20c, firmdata_df[firmdata_df$year %in% 2020,]) %>% as.numeric()
+
 # Export -----------------------------------------------------------------------
 #firmdata_df <- as.data.frame(firmdata_df)
 saveRDS(firmdata_df, file.path(data_file_path, "Mexico Industry Data", "FinalData", "firms_17_20.Rds"))
+
+
+
+
+
 

@@ -11,7 +11,7 @@ gadm_chull <- gBuffer(gadm_chull, byid=T, width = 2/111.12)
 
 # Export -----------------------------------------------------------------------
 writeOGR(obj = gadm_chull,
-         dsn = file.path(data_file_path, "Canada Industry Data", "IntermediateData"),
+         dsn = file.path(data_file_path, "GADM", "canada_chull"),
          layer = "canada_chull",
          driver = "ESRI Shapefile")
 

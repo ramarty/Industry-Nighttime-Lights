@@ -1,27 +1,28 @@
 # Summarize data in polygons
 
 # Take average nighttime lights and firm level data within hexagons and GADM polygons
+EXTRACT_FIRMS_ALL <- T
+EXTRACT_FIRMS_CATEGORIES <- T
+EXTRACT_DMSPOLS   <- T
+REPLACE_FILES <- F
 
-country <- "canada"
+country <- "mexico"
+
+country_cap <- capitalize(country)
 
 if(country %in% "canada"){
   FIRM_YEARS <- c(2001, 2003, 2005, 2007, 2009, 2011, 2013)
 }
 
 if(country %in% "mexico"){
-  FIRM_YEARS <- c(2004, 2009, 2014)
+  FIRM_YEARS <- c(2004, 2009, 2014, 2017, 2018, 2019, 2020)
 }
 
+type_codes <- readRDS(file.path(data_file_path, paste0(country_cap, " Industry Data"), "FinalData", "naics2_types.Rds"))
 
-EXTRACT_FIRMS_ALL <- T
-EXTRACT_FIRMS_CATEGORIES <- T
-EXTRACT_DMSPOLS   <- T
-
-# Load Firm Data --------------------------------------------------------------------
-firms <- readRDS(file.path(data_file_path, paste0(capitalize(country), " Industry Data"), "FinalData", "firms_clean.Rds"))
-firms$firms <- 1 # when aggregating, counts total number of firms in area
-#firms <- spTransform(firms, CRS(PROJ_canada))
-#firms <- spTransform(firms, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+# Load Firm Data ---------------------------------------------------------------
+#firms <- readRDS(file.path(data_file_path, paste0(capitalize(country), " Industry Data"), "FinalData", "firms.Rds"))
+#firms$firms <- 1 # when aggregating, counts total number of firms in area
 
 # Extract Data -----------------------------------------------------------------
 #### Dataset names
@@ -34,7 +35,7 @@ gadm_files <- list.files(file.path(data_file_path, "GADM", "RawData"), pattern =
   str_subset(country %>% substring(1,3) %>% toupper()) # "CAN" or "MEX"
 
 #### Loop through datasets and process
-for(dataset in c(grid_files)){ # gadm_files
+for(dataset in c(grid_files)){ 
   
   print(paste(dataset, "-----------------------------------------------------"))
   
@@ -62,27 +63,75 @@ for(dataset in c(grid_files)){ # gadm_files
   
   #### All Firms
   if(EXTRACT_FIRMS_ALL){
-    polygon_firms_all   <- lapply(FIRM_YEARS, extract_firm_stats, polygon, firms, "_all") %>% bind_rows()
-    saveRDS(polygon_firms_all, file.path(OUT_PATH, paste0(dataset,"_firms_all",".Rds")))
+    OUT_PATH_i <- file.path(OUT_PATH, paste0(dataset,"_firms_all",".Rds"))
+    
+    if(!file.exists(OUT_PATH_i) | REPLACE_FILES){
+      polygon_firms_all <- lapply(FIRM_YEARS, extract_firm_stats, 
+                                  polygon, 
+                                  file.path(data_file_path, paste0(capitalize(country), " Industry Data"), "FinalData"), 
+                                  NULL,
+                                  "_all") %>% 
+        bind_rows()
+      saveRDS(polygon_firms_all, OUT_PATH_i)
+    }
+    rm(OUT_PATH_i)
   }
   
   #### Firm Categories
   if(EXTRACT_FIRMS_CATEGORIES){
     
-    type_codes <- firms$naics2 %>% unique()
-    
     for(type_i in type_codes){
       print(paste("type:", type_i, "-----------------------------------------"))
-      polygon_firms_typei   <- lapply(FIRM_YEARS, extract_firm_stats, polygon, firms[firms$naics2 %in% type_i,], paste0("_t",type_i)) %>% bind_rows()
-      saveRDS(polygon_firms_typei, file.path(OUT_PATH, paste0(dataset,"_firms_t",type_i,".Rds")))
+      
+      OUT_PATH_i <- file.path(OUT_PATH, paste0(dataset,"_firms_t",type_i,".Rds"))
+      
+      if(!file.exists(OUT_PATH_i) | REPLACE_FILES){
+        polygon_firms_typei <- lapply(FIRM_YEARS, 
+                                      extract_firm_stats, 
+                                      polygon, 
+                                      file.path(data_file_path, paste0(capitalize(country), " Industry Data"), "FinalData"),
+                                      type_i, 
+                                      paste0("_t",type_i)) %>% 
+          bind_rows()
+        saveRDS(polygon_firms_typei, OUT_PATH_i)
+      }
+      rm(OUT_PATH_i)
     }
     
   }
   
   #### DMSPOLS
   if(EXTRACT_DMSPOLS){
-    polygon_dmspols <- lapply(FIRM_YEARS, extract_dmspols, polygon, country) %>% bind_rows()
-    saveRDS(polygon_dmspols, file.path(OUT_PATH, paste0(dataset,"_dmspols",".Rds")))
+    OUT_PATH_i <- file.path(OUT_PATH, paste0(dataset,"_dmspols",".Rds"))
+    
+    if(!file.exists(OUT_PATH_i) | REPLACE_FILES){
+      polygon_dmspols <- lapply(FIRM_YEARS[FIRM_YEARS <= 2014], extract_ntl, polygon, country, "dmspols") %>% bind_rows()
+      saveRDS(polygon_dmspols, OUT_PATH_i)
+    }
+    rm(OUT_PATH_i)
+  }
+  
+  #### VIIRS
+  if(EXTRACT_VIIRS){
+    OUT_PATH_i <- file.path(OUT_PATH, paste0(dataset,"_viirs",".Rds"))
+    
+    if(!file.exists(OUT_PATH_i) | REPLACE_FILES){
+      polygon_viirs <- lapply(FIRM_YEARS[FIRM_YEARS >= 2011], extract_ntl, polygon, country, "viirs") %>% bind_rows()
+      saveRDS(polygon_viirs, OUT_PATH_i)
+    }
+    
+    rm(OUT_PATH_i)
+  }
+  
+  #### VIIRS Corrected
+  if(EXTRACT_VIIRS_CORRECTED & country %in% "mexico"){
+    OUT_PATH_i <- file.path(OUT_PATH, paste0(dataset,"_viirs_corrected",".Rds"))
+    
+    if(!file.exists(OUT_PATH_i) | REPLACE_FILES){
+      polygon_viirs_c <- lapply(FIRM_YEARS[FIRM_YEARS >= 2014], extract_ntl, polygon, country, "viirs_corrected") %>% bind_rows()
+      saveRDS(polygon_viirs_c, OUT_PATH_i)
+    }
+    rm(OUT_PATH_i)
   }
   
   
