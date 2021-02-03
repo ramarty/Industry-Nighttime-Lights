@@ -19,7 +19,7 @@ for(country in c("mexico", "canada")){
     
     r <- readRDS(file.path(data_file_path, "Grid", "RawData", paste0(grid_i, ".Rds")))
     
-    df_all <- lapply(FIRM_YEARS, collapse_firm_to_grid, "Mexico", r) %>%
+    df_all <- lapply(FIRM_YEARS, collapse_firm_to_grid, country_cap, r) %>%
       bind_rows()
     
     saveRDS(df_all, file.path(data_file_path, "Grid", "FinalData", country, 
