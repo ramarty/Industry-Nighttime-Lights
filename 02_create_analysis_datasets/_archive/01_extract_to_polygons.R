@@ -1,12 +1,12 @@
 # Summarize data in polygons
 
 # Take average nighttime lights and firm level data within hexagons and GADM polygons
-EXTRACT_FIRMS_ALL <- T
+EXTRACT_FIRMS_ALL        <- T
 EXTRACT_FIRMS_CATEGORIES <- T
-EXTRACT_DMSPOLS   <- T
-EXTRACT_VIIRS <- T
-EXTRACT_VIIRS_CORRECTED <- T
-REPLACE_FILES <- F
+EXTRACT_DMSPOLS          <- T
+EXTRACT_VIIRS            <- T
+EXTRACT_VIIRS_CORRECTED  <- T
+REPLACE_FILES            <- F
 
 country <- "mexico"
 
@@ -65,13 +65,38 @@ for(dataset in c(grid_files)){
   
   #### All Firms
   if(EXTRACT_FIRMS_ALL){
-    OUT_PATH_i <- file.path(OUT_PATH, paste0(dataset,"_firms_all",".Rds"))
+    for(year_i in FIRM_YEARS){
+      
+      OUT_PATH_i <- file.path(OUT_PATH, paste0(dataset,"_firms_",year_i,".Rds"))
+      
+      if(!file.exists(OUT_PATH_i) | REPLACE_FILES){
+        
+        firms_i <- readRDS(file.path(data_file_path, 
+                                     paste0(capitalize(country), " Industry Data"), "FinalData",
+                                     paste0("firms_", year, ".Rds")))
+        
+        a <- extract_firm_stats(polygon[1:10,], firms_i)
+        
+        polygon_firms_all <- lapply(FIRM_YEARS, extract_firm_stats, 
+                                    polygon, 
+                                    file.path(data_file_path, paste0(capitalize(country), " Industry Data"), "FinalData"), 
+                                    "_all")
+        
+      }
+      
+      
+      
+    }
+    
+    
+    
+    
+    
     
     if(!file.exists(OUT_PATH_i) | REPLACE_FILES){
       polygon_firms_all <- lapply(FIRM_YEARS, extract_firm_stats, 
                                   polygon, 
                                   file.path(data_file_path, paste0(capitalize(country), " Industry Data"), "FinalData"), 
-                                  NULL,
                                   "_all") %>% 
         bind_rows()
       saveRDS(polygon_firms_all, OUT_PATH_i)
@@ -80,7 +105,7 @@ for(dataset in c(grid_files)){
   }
   
   #### Firm Categories
-  if(EXTRACT_FIRMS_CATEGORIES){
+  if(EXTRACT_FIRMS_CATEGORIES | F){
     
     for(type_i in type_codes){
       print(paste("type:", type_i, "-----------------------------------------"))
@@ -103,6 +128,7 @@ for(dataset in c(grid_files)){
   }
   
   #### DMSPOLS
+  print("dmspols -------------------------------------------------------------")
   if(EXTRACT_DMSPOLS){
     OUT_PATH_i <- file.path(OUT_PATH, paste0(dataset,"_dmspols",".Rds"))
     
@@ -114,6 +140,7 @@ for(dataset in c(grid_files)){
   }
   
   #### VIIRS
+  print("viirs -------------------------------------------------------------")
   if(EXTRACT_VIIRS){
     OUT_PATH_i <- file.path(OUT_PATH, paste0(dataset,"_viirs",".Rds"))
     
@@ -126,6 +153,7 @@ for(dataset in c(grid_files)){
   }
   
   #### VIIRS Corrected
+  print("viirs corrected -----------------------------------------------------")
   if(EXTRACT_VIIRS_CORRECTED & country %in% "mexico"){
     OUT_PATH_i <- file.path(OUT_PATH, paste0(dataset,"_viirs_corrected",".Rds"))
     

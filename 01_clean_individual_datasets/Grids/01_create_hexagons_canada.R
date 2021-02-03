@@ -1,7 +1,5 @@
 # Create Hexagons
 
-# DEPENDS: 01_append_firm_data.R
-
 # Create hexagons around all areas with lights or firms. Creates hexagons of 
 # different sizes. The main challenge the code deals with is making hexagons
 # across a large extent of Canada. To addess, it
@@ -55,7 +53,6 @@ coords_df_coords_dnct <- coords_df_coords %>%
 
 coordinates(coords_df_coords_dnct) <- ~lon+lat
 crs(coords_df_coords_dnct) <- CRS(PROJ_canada)
-#coords_buff <- gBuffer_chunks(coords_df_coords_dnct, 3*1000, 5000)
 coords_buff <- gBuffer(coords_df_coords_dnct, width=5*1000, capStyle = "SQUARE", byid = T)
 coords_buff_agg <- raster::aggregate(coords_buff, by="id")
 
@@ -77,8 +74,8 @@ hex_10   <- create_hexagons(hex_25,   10*1000,   T, coords_buff_agg_sf)
 hex_5    <- create_hexagons(hex_10,   5*1000,    T, coords_buff_agg_sf)
 saveRDS(hex_5,    file.path(data_file_path, "Grid", "hex_5km.Rds"))
 
-hex_1    <- create_hexagons(hex_5,    1*1000,    F, coords_buff_agg_sf)
-saveRDS(hex_1,    file.path(data_file_path, "Grid", "hex_1km.Rds"))
+#hex_1    <- create_hexagons(hex_5,    1*1000,    F, coords_buff_agg_sf)
+#saveRDS(hex_1,    file.path(data_file_path, "Grid", "hex_1km.Rds"))
 
 # Export -----------------------------------------------------------------------
 saveRDS(hex_1000, file.path(data_file_path, "Grid", "RawData","can_hex_1000km.Rds"))
@@ -89,4 +86,4 @@ saveRDS(hex_50,   file.path(data_file_path, "Grid", "RawData","can_hex_50km.Rds"
 saveRDS(hex_25,   file.path(data_file_path, "Grid", "RawData","can_hex_25km.Rds"))
 saveRDS(hex_10,   file.path(data_file_path, "Grid", "RawData","can_hex_10km.Rds"))
 saveRDS(hex_5,    file.path(data_file_path, "Grid", "RawData","can_hex_5km.Rds"))
-saveRDS(hex_1,    file.path(data_file_path, "Grid", "RawData","can_hex_1km.Rds"))
+#saveRDS(hex_1,    file.path(data_file_path, "Grid", "RawData","can_hex_1km.Rds"))

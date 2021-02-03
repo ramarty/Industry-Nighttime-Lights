@@ -1,16 +1,76 @@
 # Extraction Functions ---------------------------------------------------------
-extract_firm_stats <- function(year, polygon, path_to_firm_dir, naics2_i, firm_name_suffix){
+collapse_firm_to_grid <- function(year, country_cap, r){
+  print(year)
+  
+  # Determine Polygon ID -------------------------------------------------------
+  firms_i <- readRDS(file.path(data_file_path, 
+                               paste0(country_cap, " Industry Data"), "FinalData",
+                               paste0("firms_", year, ".Rds")))
+  
+  # Cleanup
+  firms_i$dmspols <- NULL
+  firms_i$viirs <- NULL
+  firms_i$viirs_corrected <- NULL
+  firms_i$year <- NULL
+  firms_i$empl_cat <- NULL
+  firms_i$id <- NULL
+  firms_i$naics2 <- firms_i$naics2 %>% as.character()
+  
+  firms_i$poly_id <- raster::extract(r, firms_i) %>% as.numeric()
+  
+  # Collapse -------------------------------------------------------------------
+  ## Mean
+  df_mean_all <- firms_i@data %>%
+    group_by(poly_id) %>%
+    summarise_if(is.numeric, mean, na.rm=T) %>%
+    dplyr::mutate(naics2 = "all")
+  
+  df_mean_type <- firms_i@data %>%
+    group_by(poly_id, naics2) %>%
+    summarise_if(is.numeric, mean, na.rm=T)
+  
+  ## Sum
+  firms_i$N_firms <- 1
+  df_sum_all <- firms_i@data %>%
+    group_by(poly_id) %>%
+    summarise_if(is.numeric, sum, na.rm=T) %>%
+    dplyr::mutate(naics2 = "all")
+  
+  df_sum_type <- firms_i@data %>%
+    group_by(poly_id, naics2) %>%
+    summarise_if(is.numeric, sum, na.rm=T)
+  
+  #### Append/Merge
+  df_sum  <- bind_rows(df_sum_all,  df_sum_type)
+  df_mean <- bind_rows(df_mean_all, df_mean_type)
+  
+  df_sum  <- df_sum  %>% rename_at(vars(-poly_id, -naics2), ~ paste0(., '_sum'))
+  df_mean <- df_mean %>% rename_at(vars(-poly_id, -naics2), ~ paste0(., '_mean'))
+  
+  df_merged <- merge(df_sum, df_mean, by = c("poly_id", "naics2"), all = T)
+  
+  df_merged <- df_merged[!is.na(df_merged$naics2),]
+  
+  # Reshape --------------------------------------------------------------------
+  df_merged_r <- df_merged %>%
+    pivot_wider(names_from = naics2, values_from = -c(poly_id, naics2))
+  df_merged_r$year <- year
+  
+  return(df_merged_r)
+}
+
+extract_firm_stats <- function(polygon, firms_i){
   
   #### Where are we?
   print(paste(year, "------------------------------------------------------"))
   
   #### Load Data
-  firms_i <- readRDS(file.path(path_to_firm_dir, paste0("firms_", year, ".Rds")))
-  if(!is.null(naics2_i)) firms_i <- firms_i[firms_i$naics2 %in% naics2_i,]
+  #firms_i <- readRDS(file.path(path_to_firm_dir, paste0("firms_", year, ".Rds")))
+  #if(!is.null(naics2_i)) firms_i <- firms_i[firms_i$naics2 %in% naics2_i,]
   
   # Remove all variables don't need to aggregate
   firms_i$id <- NULL
-  firms_i$naics2 <- NULL
+  #firms_i$naics2 <- NULL
   firms_i$naicsname <- NULL
   firms_i$dmspols <- NULL
   firms_i$viirs <- NULL
@@ -18,43 +78,58 @@ extract_firm_stats <- function(year, polygon, path_to_firm_dir, naics2_i, firm_n
   firms_i$year <- NULL
   
   #### Remove character variables
-  for(var in names(firms_i)){
-    if(is.character(firms_i[[var]][1])){
-      firms_i[[var]] <- NULL
-    }
-  }
+  #for(var in names(firms_i)){
+  #  if(is.character(firms_i[[var]][1])){
+  #    firms_i[[var]] <- NULL
+  #  }
+  #}
   
   #### Grab firm data in year i
   #firms_i <- firms[firms$year %in% year,]
   #firms_i$year <- NULL # don't need to aggregate year variable
   
-  #### Country Level
-  if(nrow(polygon) %in% 1){
-    
-    polygon_OVER_firm_mean <- apply(firms_i@data, 2, mean, na.rm=T) %>% t %>% as.data.frame()
-    
-    firms_i$N_firms <- 1
-    polygon_OVER_firm_sum <- apply(firms_i@data, 2, sum, na.rm=T) %>% t %>% as.data.frame()
-    
-    polygon_OVER_firm_mean$year <- NULL
-    polygon_OVER_firm_sum$year <- NULL
-    
+  #### Determine Polygon ID
+  if(nrow(polygon) %in% 1){ # Country Level
+    firms_i$poly_id <- 1
   } else{
-    polygon_OVER_firm_mean <- over_chunks(polygon, firms_i, "mean", 100) 
-    polygon_OVER_firm_sum <- over_chunks(polygon, firms_i, "sum", 100) 
+    firms_i$poly_id <- over_chunks(firms_i, polygon, "none", 50000)$id
   }
   
-  names(polygon_OVER_firm_mean) <- paste0(names(polygon_OVER_firm_mean), "_mean")
-  names(polygon_OVER_firm_sum) <- paste0(names(polygon_OVER_firm_sum), "_sum")
+  #### Collapse
   
-  polygon_OVER_firm <- bind_cols(polygon_OVER_firm_mean, 
-                                 polygon_OVER_firm_sum)
-  names(polygon_OVER_firm) <- paste0(names(polygon_OVER_firm), firm_name_suffix)
+  ## Mean
+  df_mean_all <- firms_i@data %>%
+    group_by(poly_id) %>%
+    summarise_if(is.numeric, mean, na.rm=T) %>%
+    dplyr::mutate(naics2 = "all")
   
-  polygon_OVER_firm$id <- polygon$id
-  polygon_OVER_firm$year <- year
+  df_mean_type <- firms_i@data %>%
+    group_by(poly_id, naics2) %>%
+    summarise_if(is.numeric, mean, na.rm=T)
   
-  return(polygon_OVER_firm)
+  ## Sum
+  firms_i$N_firms <- 1
+  df_sum_all <- firms_i@data %>%
+    group_by(poly_id) %>%
+    summarise_if(is.numeric, sum, na.rm=T) %>%
+    dplyr::mutate(naics2 = "all")
+
+  df_sum_type <- firms_i@data %>%
+    group_by(poly_id, naics2) %>%
+    summarise_if(is.numeric, sum, na.rm=T)
+  
+  #### Append/Merge
+  df_sum  <- bind_rows(df_sum_all,  df_sum_type)
+  df_mean <- bind_rows(df_mean_all, df_mean_type)
+  
+  df_sum  <- df_sum  %>% rename_at(vars(-poly_id, -naics2), ~ paste0(., '_sum'))
+  df_mean <- df_mean %>% rename_at(vars(-poly_id, -naics2), ~ paste0(., '_mean'))
+  
+  df_merged <- merge(df_sum, df_mean, by = c("poly_id", "naics2"), all = T)
+
+  df_merged <- df_merged[!is.na(df_merged$naics2),]
+  
+  return(df_merged)
 }
 
 extract_ntl <- function(year, polygon, country, ntl_type){
