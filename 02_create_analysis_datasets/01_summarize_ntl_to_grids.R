@@ -17,7 +17,7 @@ for(country in c("canada", "mexico")){
     str_subset(country %>% substring(1,3)) %>%
     str_subset("_raster")
   
-  OUT_PATH <- file.path(data_file_path, "Grid", "FinalData", country)
+  OUT_PATH <- file.path(data_file_path, "Grid", "FinalData", country,  "individual_datasets")
   
   for(grid_i in grid_files){
     print(paste(grid_i, "----------------------------------------------------"))

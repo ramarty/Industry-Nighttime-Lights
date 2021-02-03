@@ -23,6 +23,7 @@ for(country in c("mexico", "canada")){
       bind_rows()
     
     saveRDS(df_all, file.path(data_file_path, "Grid", "FinalData", country, 
+                              "individual_datasets",
                               paste0(grid_i %>% 
                                        str_replace_all("_raster",
                                                        "_firms"), 
