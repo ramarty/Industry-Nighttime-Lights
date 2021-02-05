@@ -65,9 +65,12 @@ for(country in c("canada", "mexico")){
       }
       
       # Transform Variables --------------------------------------------------------
-      variables <- names(data)[grepl("dmspols|firms|employment|viirs", names(data))]
+      variables <- names(data)[grepl("dmspols|firms|employment|empl|viirs", names(data))]
       variables <- variables[!grepl("anyyear", variables)]
       variables <- variables[!(variables %in% c("lon", "lat"))]
+      
+      ## REMOVE BY SECTOR
+      variables <- variables[!grepl("_[[:digit:]][[:digit:]]$", variables)]
       
       for(var in variables){
         data[[paste0(var, "_log")]] <- log(data[[var]] + 1)

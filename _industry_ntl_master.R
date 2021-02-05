@@ -4,6 +4,8 @@
 RUN_SCRIPTS <- F
 
 # Filepaths --------------------------------------------------------------------
+if(Sys.info()[["user"]] == "robmarty") overleaf_file_path <- "~/Dropbox/Apps/Overleaf/Industry and Nighttime Lights"
+
 if(Sys.info()[["user"]] == "WB521633") project_file_path <- "C:/Users/wb521633/Dropbox/World Bank/Methods Papers/Industry and Nighttime lights Project"
 if(Sys.info()[["user"]] == "robmarty") project_file_path <- "~/Dropbox/World Bank/Methods Papers/Industry and Nighttime lights Project"
 
@@ -13,8 +15,8 @@ if(Sys.info()[["user"]] == "robmarty") github_file_path <- "~/Documents/Github/I
 data_file_path       <- file.path(project_file_path, "Data")
 raw_data_file_path   <- file.path(project_file_path, "Data", "RawData")
 final_data_file_path <- file.path(project_file_path, "Data", "FinalData")
-figures_file_path    <- file.path(project_file_path, "Paper", "figures")
-tables_file_path     <- file.path(project_file_path, "Paper", "tables")
+figures_file_path    <- file.path(overleaf_file_path, "figures")
+tables_file_path     <- file.path(overleaf_file_path, "tables")
 
 merged_data_grid <- file.path(data_file_path, "Grid", "FinalData", "merged_datasets")
 merged_data_gadm <- file.path(data_file_path, "GADM", "FinalData", "merged_datasets")
@@ -58,6 +60,7 @@ library(labelled)
 library(estimatr)
 library(readr)
 library(tidyr)
+library(ggpubr)
 
 # User Defined Functions -------------------------------------------------------
 source("https://raw.githubusercontent.com/ramarty/fast-functions/master/R/functions_in_chunks.R")
