@@ -11,12 +11,15 @@ collapse_firm_to_grid <- function(year, country_cap, r){
   firms_i$dmspols <- NULL
   firms_i$viirs <- NULL
   firms_i$viirs_corrected <- NULL
+  firms_i$viirs_lead <- NULL
+  firms_i$viirs_lead_corrected <- NULL
   firms_i$year <- NULL
   firms_i$empl_cat <- NULL
   firms_i$id <- NULL
   firms_i$naics2 <- firms_i$naics2 %>% as.character()
   
   firms_i$poly_id <- raster::extract(r, firms_i) %>% as.numeric()
+  firms_i <- firms_i[!is.na(firms_i$poly_id),]
   
   # Collapse -------------------------------------------------------------------
   ## Mean
@@ -55,6 +58,9 @@ collapse_firm_to_grid <- function(year, country_cap, r){
   df_merged_r <- df_merged %>%
     pivot_wider(names_from = naics2, values_from = -c(poly_id, naics2))
   df_merged_r$year <- year
+  
+  df_merged_r <- df_merged_r %>%
+    dplyr::rename(id = poly_id)
   
   return(df_merged_r)
 }

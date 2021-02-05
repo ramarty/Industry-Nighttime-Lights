@@ -124,15 +124,16 @@ if(RUN_SCRIPTS){
   create_anlys_dta_code <- file.path(github_file_path, "02_create_analysis_datasets")
   
   ## Extract firm data to grids
-  source(file.path(create_anlys_dta_code, "Grids", "01_summarize_firm_data_to_grids.R"))
+  source(file.path(create_anlys_dta_code, "01_summarize_firm_data_to_grids.R"))
   
   # Extract nighttime lights data to grids
-  source(file.path(create_anlys_dta_code, "Grids", "01_summarize_ntl_to_grids.R"))
+  source(file.path(create_anlys_dta_code, "01_summarize_ntl_to_grids.R"))
   
   # Merge firm and nighttime lights data together
-  source(file.path(create_anlys_dta_code, "Grids", "02_merge_datasets.R"))
+  source(file.path(create_anlys_dta_code, "02_merge_datasets.R"))
   
-  # Clean datasets
+  # Clean datasets Includes constructing variables, including logging variables
+  # and constructing first differences. This code takes about 4 hours to run.
   source(file.path(create_anlys_dta_code, "Grids", "03_clean_datasets.R"))
   
   # 3. ANALYSIS ================================================================

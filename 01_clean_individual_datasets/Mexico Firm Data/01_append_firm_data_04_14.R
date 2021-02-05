@@ -36,17 +36,28 @@ dmspols_04 <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", pa
 dmspols_09 <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("mexico_dmspols_",2009,".tif")))
 dmspols_13 <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("mexico_dmspols_",2013,".tif")))
 
-firmdata_df$dmspols[firmdata_df$year %in% 2004] <- extract(dmspols_04, firmdata_df[firmdata_df$year %in% 2004,]) %>% as.numeric()
-firmdata_df$dmspols[firmdata_df$year %in% 2009] <- extract(dmspols_09, firmdata_df[firmdata_df$year %in% 2009,]) %>% as.numeric()
-firmdata_df$dmspols[firmdata_df$year %in% 2014] <- extract(dmspols_13, firmdata_df[firmdata_df$year %in% 2014,]) %>% as.numeric()
+firmdata_df$dmspols[firmdata_df$year %in% 2004] <- raster::extract(dmspols_04, firmdata_df[firmdata_df$year %in% 2004,]) %>% as.numeric()
+firmdata_df$dmspols[firmdata_df$year %in% 2009] <- raster::extract(dmspols_09, firmdata_df[firmdata_df$year %in% 2009,]) %>% as.numeric()
+firmdata_df$dmspols[firmdata_df$year %in% 2014] <- raster::extract(dmspols_13, firmdata_df[firmdata_df$year %in% 2014,]) %>% as.numeric()
 
 # Extract VIIRS ----------------------------------------------------------------
 firmdata_df$viirs <- NA
 viirs_14 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_mean_",2014,".tif")))
 viirs_14c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_corrected_mean_",2014,".tif")))
 
-firmdata_df$viirs[firmdata_df$year %in% 2014] <- extract(viirs_14, firmdata_df[firmdata_df$year %in% 2014,]) %>% as.numeric()
-firmdata_df$viirs_corrected[firmdata_df$year %in% 2014] <- extract(viirs_14c, firmdata_df[firmdata_df$year %in% 2014,]) %>% as.numeric()
+firmdata_df$viirs[firmdata_df$year %in% 2014] <- raster::extract(viirs_14, firmdata_df[firmdata_df$year %in% 2014,]) %>% as.numeric()
+firmdata_df$viirs_corrected[firmdata_df$year %in% 2014] <- raster::extract(viirs_14c, firmdata_df[firmdata_df$year %in% 2014,]) %>% as.numeric()
+
+# Simplify naics ---------------------------------------------------------------
+firmdata_df$naics2[firmdata_df$naics2 %in% 21:22] <- 21
+firmdata_df$naics2[firmdata_df$naics2 %in% 31:33] <- 31
+firmdata_df$naics2[firmdata_df$naics2 %in% 41:43] <- 42
+firmdata_df$naics2[firmdata_df$naics2 %in% 44:46] <- 44
+firmdata_df$naics2[firmdata_df$naics2 %in% 48:49] <- 48
+firmdata_df$naics2[firmdata_df$naics2 %in% 51:56] <- 51
+firmdata_df$naics2[firmdata_df$naics2 %in% 61:62] <- 61
+firmdata_df$naics2[firmdata_df$naics2 %in% 71:72] <- 71
+firmdata_df$naics2[firmdata_df$naics2 %in% 81:92] <- 81
 
 # Export -----------------------------------------------------------------------
 saveRDS(firmdata_df, file.path(data_file_path, "Mexico Industry Data", "FinalData", "firms_04_14.Rds"))

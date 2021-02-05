@@ -97,10 +97,10 @@ viirs_18 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0
 viirs_19 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_mean_",2019,".tif")))
 viirs_20 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_mean_",2020,".tif")))
 
-firmdata_df$viirs[firmdata_df$year %in% 2017] <- extract(viirs_17, firmdata_df[firmdata_df$year %in% 2017,]) %>% as.numeric()
-firmdata_df$viirs[firmdata_df$year %in% 2018] <- extract(viirs_18, firmdata_df[firmdata_df$year %in% 2018,]) %>% as.numeric()
-firmdata_df$viirs[firmdata_df$year %in% 2019] <- extract(viirs_19, firmdata_df[firmdata_df$year %in% 2019,]) %>% as.numeric()
-firmdata_df$viirs[firmdata_df$year %in% 2020] <- extract(viirs_20, firmdata_df[firmdata_df$year %in% 2020,]) %>% as.numeric()
+firmdata_df$viirs[firmdata_df$year %in% 2017] <- raster::extract(viirs_17, firmdata_df[firmdata_df$year %in% 2017,]) %>% as.numeric()
+firmdata_df$viirs[firmdata_df$year %in% 2018] <- raster::extract(viirs_18, firmdata_df[firmdata_df$year %in% 2018,]) %>% as.numeric()
+firmdata_df$viirs[firmdata_df$year %in% 2019] <- raster::extract(viirs_19, firmdata_df[firmdata_df$year %in% 2019,]) %>% as.numeric()
+firmdata_df$viirs[firmdata_df$year %in% 2020] <- raster::extract(viirs_20, firmdata_df[firmdata_df$year %in% 2020,]) %>% as.numeric()
 
 # Extract VIIRS - Corrected ----------------------------------------------------
 firmdata_df$viirs_corrected <- NA
@@ -109,13 +109,23 @@ viirs_18c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste
 viirs_19c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_corrected_mean_",2019,".tif")))
 viirs_20c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_corrected_mean_",2020,".tif")))
 
-firmdata_df$viirs_corrected[firmdata_df$year %in% 2017] <- extract(viirs_17c, firmdata_df[firmdata_df$year %in% 2017,]) %>% as.numeric()
-firmdata_df$viirs_corrected[firmdata_df$year %in% 2018] <- extract(viirs_18c, firmdata_df[firmdata_df$year %in% 2018,]) %>% as.numeric()
-firmdata_df$viirs_corrected[firmdata_df$year %in% 2019] <- extract(viirs_19c, firmdata_df[firmdata_df$year %in% 2019,]) %>% as.numeric()
-firmdata_df$viirs_corrected[firmdata_df$year %in% 2020] <- extract(viirs_20c, firmdata_df[firmdata_df$year %in% 2020,]) %>% as.numeric()
+firmdata_df$viirs_corrected[firmdata_df$year %in% 2017] <- raster::extract(viirs_17c, firmdata_df[firmdata_df$year %in% 2017,]) %>% as.numeric()
+firmdata_df$viirs_corrected[firmdata_df$year %in% 2018] <- raster::extract(viirs_18c, firmdata_df[firmdata_df$year %in% 2018,]) %>% as.numeric()
+firmdata_df$viirs_corrected[firmdata_df$year %in% 2019] <- raster::extract(viirs_19c, firmdata_df[firmdata_df$year %in% 2019,]) %>% as.numeric()
+firmdata_df$viirs_corrected[firmdata_df$year %in% 2020] <- raster::extract(viirs_20c, firmdata_df[firmdata_df$year %in% 2020,]) %>% as.numeric()
+
+# Simplify naics ---------------------------------------------------------------
+firmdata_df$naics2[firmdata_df$naics2 %in% 21:22] <- 21
+firmdata_df$naics2[firmdata_df$naics2 %in% 31:33] <- 31
+firmdata_df$naics2[firmdata_df$naics2 %in% 41:43] <- 42
+firmdata_df$naics2[firmdata_df$naics2 %in% 44:46] <- 44
+firmdata_df$naics2[firmdata_df$naics2 %in% 48:49] <- 48
+firmdata_df$naics2[firmdata_df$naics2 %in% 51:56] <- 51
+firmdata_df$naics2[firmdata_df$naics2 %in% 61:62] <- 61
+firmdata_df$naics2[firmdata_df$naics2 %in% 71:72] <- 71
+firmdata_df$naics2[firmdata_df$naics2 %in% 81:92] <- 81
 
 # Export -----------------------------------------------------------------------
-#firmdata_df <- as.data.frame(firmdata_df)
 saveRDS(firmdata_df, file.path(data_file_path, "Mexico Industry Data", "FinalData", "firms_17_20.Rds"))
 
 

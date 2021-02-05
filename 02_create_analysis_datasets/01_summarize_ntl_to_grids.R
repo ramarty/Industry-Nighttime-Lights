@@ -13,9 +13,9 @@ for(country in c("canada", "mexico")){
   if(country %in% "mexico") FIRM_YEARS <- FIRM_YEARS_MEXICO
   
   grid_files <- list.files(file.path(data_file_path, "Grid", "RawData"), pattern = "*.Rds") %>%
+    str_subset("km.Rds") %>% # remove "_raster.Rds"
     str_replace_all(".Rds", "") %>%
-    str_subset(country %>% substring(1,3)) %>%
-    str_subset("_raster")
+    str_subset(country %>% substring(1,3)) 
   
   OUT_PATH <- file.path(data_file_path, "Grid", "FinalData", country,  "individual_datasets")
   
