@@ -1,8 +1,10 @@
 # Summarize data in polygons
 
-EXTRACT_DMSPOLS         <- T
-EXTRACT_VIIRS           <- T
-EXTRACT_VIIRS_CORRECTED <- T
+EXTRACT_DMSPOLS         <- F
+EXTRACT_DMSPOLSZHANG    <- F
+EXTRACT_DMSPOLSELVIDGE  <- T
+EXTRACT_VIIRS           <- F
+EXTRACT_VIIRS_CORRECTED <- F
 
 for(country in c("canada", "mexico")){
   
@@ -28,10 +30,17 @@ for(country in c("canada", "mexico")){
     polygon$group <- 1
     
     ## DMSPOLS
-    print("dmspols -----------------------------------------------------------")
-    if(EXTRACT_DMSPOLS){
-      polygon_dmspols <- lapply(FIRM_YEARS[FIRM_YEARS <= 2014], extract_ntl, polygon, country, "dmspols") %>% bind_rows()
-      saveRDS(polygon_dmspols, file.path(OUT_PATH, paste0(grid_i,"_dmspols",".Rds")))
+    print("dmspols zhang -----------------------------------------------------")
+    if(EXTRACT_DMSPOLSZHANG){
+      polygon_dmspols_z <- lapply(FIRM_YEARS[FIRM_YEARS <= 2014], extract_ntl, polygon, country, "dmspolszhang") %>% bind_rows()
+      saveRDS(polygon_dmspols_z, file.path(OUT_PATH, paste0(grid_i,"_dmspolszhang_",".Rds")))
+    }
+    
+    ## DMSPOLS
+    print("dmspols elvidge ---------------------------------------------------")
+    if(EXTRACT_DMSPOLSELVIDGE){
+      polygon_dmspols_e <- lapply(FIRM_YEARS[FIRM_YEARS <= 2014], extract_ntl, polygon, country, "dmspolselvidge") %>% bind_rows()
+      saveRDS(polygon_dmspols_e, file.path(OUT_PATH, paste0(grid_i,"_dmspolselvidge_",".Rds")))
     }
     
     ## VIIRS

@@ -1,10 +1,8 @@
-# Figures of DMSPOLS and VIIRS Along Addis-Adama Expressway
+# Map of NTL in Mexico
 
 # Load Data --------------------------------------------------------------------
 dmspols <- raster(file.path(project_file_path, "Data", "Nighttime Lights", "DMSPOLS", "mexico_dmspols_2000.tif"))
-canada_gadm <- readRDS(file.path(project_file_path, "Data", "GADM", "RawData", "gadm36_MEX_1_sp.rds")) # %>% gSimplify(tol=.1)
-
-#canada_gadm <- crop(canada_gadm, extent(-141.003, -52.65917, 41.67693, 70))
+gadm <- readRDS(file.path(project_file_path, "Data", "GADM", "RawData", "gadm36_MEX_1_sp.rds")) 
 
 # VIIRS Plot -----------------------------------------------------------------
 dmspols.df <- as(dmspols, "SpatialPixelsDataFrame")
@@ -15,7 +13,7 @@ dmspols.df$value_adj <- (dmspols.df$value) %>% sqrt %>% sqrt
 dmspols.df <- dmspols.df[dmspols.df$value_adj >= 0.6,]
 
 p <- ggplot() +
-  geom_polygon(data=canada_gadm, aes(x=long, y=lat, group=group), fill="black") +
+  geom_polygon(data=gadm, aes(x=long, y=lat, group=group), fill="black") +
   geom_tile(data=dmspols.df, aes(x=x,y=y,fill=value_adj)) +
   labs(colour="") +
   coord_equal() +

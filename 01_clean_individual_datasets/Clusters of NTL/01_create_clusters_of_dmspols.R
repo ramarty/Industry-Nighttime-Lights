@@ -52,7 +52,7 @@ for(country in c("mexico", "canada")){
   
   # Polygonize clusters ----------------------------------------------------------
   clumps_sp <- lapply(clumps_unique_values, function(clump_i){
-    print(paste(country, "-", clump_i))
+    print(paste(country, "-", clump_i, "/", length(clumps_unique_values)))
     clump_i_sp <- rasterToPolygons(dmspols_2013_clumps, 
                                    fun=function(x){x==clump_i}, 
                                    n=4, na.rm=TRUE, 

@@ -4,6 +4,8 @@ country <- "mexico"
 dataset <- "hex_50km"
 subset <- "viirs"
 
+print("03 CLEAN DATASETS")
+
 for(country in c("canada", "mexico")){
   for(subset in c("all", "viirs", "dmspols")){
     for(dataset in c("hex_5km", 
@@ -20,7 +22,7 @@ for(country in c("canada", "mexico")){
       if((country %in% "canada") & (subset %in% c("viirs", "dmspols"))) next
       if((country %in% "mexico") & (subset %in% c("all"))) next
       
-      print(paste(dataset, "-----------------------------------------------------"))
+      print(paste(dataset, country, subset, "--------------------------------"))
       
       ## Filepaths for (1) raw data (2) individual files and (3) merged files
       if(grepl("hex", dataset)){
@@ -34,6 +36,9 @@ for(country in c("canada", "mexico")){
       # Load Data ------------------------------------------------------------------
       if(subset %in% c("dmspols", "viirs")) dataset <- paste0(dataset, "_", subset)
       data <- readRDS(file.path(MERGED_DATA_PATH, paste0(dataset, ".Rds")))
+      data$group   <- NULL
+      data$group.x <- NULL
+      data$group.y <- NULL
       
       # Subset Data ----------------------------------------------------------------
       # Only keep cells that had positive light or a firm at some point
@@ -57,6 +62,9 @@ for(country in c("canada", "mexico")){
       data <- data %>%
         dplyr::select(-all_of(vars_to_rm))
       
+      vars_to_keep <- names(data)[!grepl("_[[:digit:]][[:digit:]]", names(data))]
+      data <- data[,vars_to_keep]
+      
       # Firms: If NA, then 0 -------------------------------------------------------
       firm_vars <- names(data)[grepl("firms|employment", names(data))]
       
@@ -70,11 +78,11 @@ for(country in c("canada", "mexico")){
       variables <- variables[!(variables %in% c("lon", "lat"))]
       
       ## REMOVE BY SECTOR
-      variables <- variables[!grepl("_[[:digit:]][[:digit:]]$", variables)]
+      variables <- variables[!grepl("_[[:digit:]][[:digit:]]", variables)]
       
       for(var in variables){
         data[[paste0(var, "_log")]] <- log(data[[var]] + 1)
-        data[[paste0(var, "_g5")]] <- data[[var]] %>% cut2(g = 5) %>% as.numeric()
+        #data[[paste0(var, "_g5")]] <- data[[var]] %>% cut2(g = 5) %>% as.numeric()
         #data[[paste0(var, "_g10")]] <- data[[var]] %>% cut2(g = 10) %>% as.numeric()
         #data[[paste0(var, "_g25")]] <- data[[var]] %>% cut2(g = 25) %>% as.numeric()
         #data[[paste0(var, "_g50")]] <- data[[var]] %>% cut2(g = 50) %>% as.numeric()
@@ -93,7 +101,7 @@ for(country in c("canada", "mexico")){
       
       if(country %in% "canada") MAX_DIFF <- 6
       if(country %in% "mexico" & subset %in% "dmspols") MAX_DIFF <- 2
-      if(country %in% "mexico" & subset %in% "viirs")   MAX_DIFF <- 3
+      if(country %in% "mexico" & subset %in% "viirs")   MAX_DIFF <- 6
       
       data_diffs_list <- lapply(1:MAX_DIFF, function(i){
         print(i)

@@ -1,3 +1,67 @@
+# Load grid data without type
+
+extract_coefs <- function(model){
+  # Extract dataframe of coefficients and 95% CI from model
+  
+  ## Extract coefs
+  df_coefs   <- tidy(model)
+  
+  ## Extract 95% CI
+  df_confint <- confint(model) %>% as.data.frame() 
+  df_confint$term <- row.names(df_confint) 
+  
+  ## Merge
+  df_all <- merge(df_coefs, df_confint, by = "term")
+  
+  ## Subset and rename
+  df_all <- df_all %>%
+    dplyr::select("term", "estimate", "2.5 %", "97.5 %") %>%
+    dplyr::rename("var" = "term",
+                  "coef" = "estimate",
+                  "ci2_5" = "2.5 %",
+                  "ci97_5" = "97.5 %")
+  
+  return(df_all)
+}
+
+readRDS_exclude_type_vars <- function(filepath, year){
+  print(filepath)
+  
+  df <- readRDS(filepath)
+  #df <- df[,names(df) %in% c("unit", "year", 
+  #                           "dmspols_sum_log", "dmspols_mean_log", 
+  #                           "viirs_mean_log", "viirs_sum_log", "viirs_median_log",
+  #                           "employment_sum_all_log", "N_firms_sum_all_log")]
+  
+  rm_vars <- names(df)[str_detect(names(df), "_([[:digit:]])([[:digit:]])_")]
+  df <- df[,!(names(df) %in% rm_vars)]
+  
+  if(year != "all") df <- df[df$year %in% year,]
+  
+  return(df)
+}
+
+load_grid_data_no_type <- function(country, pattern, year){
+  
+  grid <- list.files(file.path(project_file_path, "Data", 
+                               "Grid",
+                               "FinalData",
+                               country,
+                               "merged_datasets"), pattern = pattern, full.names = T) %>%
+    lapply(readRDS_exclude_type_vars, year=year) %>%
+    bind_rows() %>%
+    filter(!is.na(unit)) %>%
+    mutate(unit = unit %>% 
+             str_replace_all("hex_", "") %>% 
+             str_replace_all("_dmspols", "") %>%
+             str_replace_all("_viirs", "") %>%
+             paste0(" Grid"))
+  grid$unit <- grid$unit %>% factor(levels = c("5km", "10km", "25km", "50km", "100km", "250km", "500km", "1000km") %>%
+                                      paste0(" Grid"))
+  
+  return(grid)
+}
+
 # Extraction Functions ---------------------------------------------------------
 collapse_firm_to_grid <- function(year, country_cap, r){
   print(year)
@@ -150,6 +214,13 @@ extract_ntl <- function(year, polygon, country, ntl_type){
     }
   }
   
+  if(ntl_type %in% c("dmspolszhang", "dmspolselvidge")){
+    # accounting for mexico in 2014
+    if(year_ntl > 2012){
+      year_ntl <- 2012
+    }
+  }
+  
   if(ntl_type %in% c("viirs", "viirs_corrected")){
     # accounting for mexico in 2014
     if(year_ntl < 2012){
@@ -160,6 +231,16 @@ extract_ntl <- function(year, polygon, country, ntl_type){
   if(ntl_type %in% "dmspols"){
     ntl_r <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", 
                               paste0(country,"_dmspols_",year_ntl,".tif")))
+  }
+  
+  if(ntl_type %in% "dmspolszhang"){
+    ntl_r <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_Zhang", "FinalData",
+                              paste0(country,"_dmspolszhang_",year_ntl,".tif")))
+  }
+  
+  if(ntl_type %in% "dmspolselvidge"){
+    ntl_r <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_Elvidge", "RawData",
+                              paste0(country %>% substr(1,3),"_dmspolselvidge_",year_ntl,".tif")))
   }
   
   if(ntl_type %in% "viirs"){

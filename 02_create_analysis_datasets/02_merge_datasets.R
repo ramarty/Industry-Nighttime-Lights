@@ -1,5 +1,7 @@
 # Merge Polygon Datasets
 
+print("02 MERGE DATASETS")
+
 for(country in c("mexico", "canada")){
   for(dataset_type in c("hex_5km", 
                         "hex_10km",
@@ -10,7 +12,7 @@ for(country in c("mexico", "canada")){
                         "hex_500km",
                         "hex_1000km")){
     
-    print(paste(dataset_type, "------------------------------------------------"))
+    print(paste(country, dataset_type, "-------------------------------------"))
     
     #### Filepaths for (1) raw data (2) individual files and (3) merged files
     if(grepl("hex", dataset_type)){
