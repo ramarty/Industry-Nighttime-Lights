@@ -41,7 +41,7 @@ readRDS_exclude_type_vars <- function(filepath, year){
   return(df)
 }
 
-load_grid_data_no_type <- function(country, pattern, year){
+load_grid_data_no_type <- function(country, pattern, year, units = "all"){
   
   grid <- list.files(file.path(project_file_path, "Data", 
                                "Grid",
@@ -58,6 +58,8 @@ load_grid_data_no_type <- function(country, pattern, year){
              paste0(" Grid"))
   grid$unit <- grid$unit %>% factor(levels = c("5km", "10km", "25km", "50km", "100km", "250km", "500km", "1000km") %>%
                                       paste0(" Grid"))
+  
+  if(units != "all") grid <- grid[grid$unit %in% units,]
   
   return(grid)
 }

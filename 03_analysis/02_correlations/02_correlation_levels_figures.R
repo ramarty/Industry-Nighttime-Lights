@@ -16,6 +16,7 @@ df_out_all$transform[df_out_all$transform %in% "level"] <- "Levels"
 
 df_out_all <- df_out_all %>%
   filter(difference %in% "level",
+         ntl_var %in% c("DMSP-OLS", "VIIRS"),
          transform %in% c("Logs", "Levels"),
          !(year %in% "All")) %>%
   mutate(year = year %>% as.character() %>% as.numeric() %>% as.factor()) %>%
