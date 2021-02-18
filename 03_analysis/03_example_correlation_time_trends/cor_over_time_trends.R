@@ -54,6 +54,39 @@ can_dmspols_firms_id  <- can_dmspols_df %>% filter(cor_ntl_firms > 0.9)  %>% pul
 can_dmspols_employ_id <- can_dmspols_df %>% filter(cor_ntl_employ > 0.9) %>% pull(id) %>% head(10)
 
 # Functions to Make Figures ----------------------------------------------------
+make_figure_i <- function(id, df, ntl_var, firm_var){
+  df_i <- df[df$id %in% id,] 
+  
+  if(grepl("firm", firm_var))   firm_title <- "N Firms"
+  if(grepl("employ", firm_var)) firm_title <- "Employment"
+  
+  if(grepl("viirs", ntl_var))   sat_title <- "VIIRS"
+  if(grepl("dmspo", ntl_var)) sat_title <- "DMSP-OLS"
+  
+  df_i$ntl_var <- df_i[[ntl_var]]
+  df_i$firm_var <- df_i[[firm_var]]
+  
+  ntl_max <- df_i$ntl_var %>% max(na.rm=T)
+  firm_max <- df_i$firm_var %>% max(na.rm=T)
+  
+  coef <- firm_max / ntl_max 
+  if(coef < 1) coef <- 1
+  
+  df_i %>% 
+    ggplot() +
+    geom_line(aes(x = year, y = ntl_var, color = sat_title), size = 1.5) +
+    geom_line(aes(x = year, y = firm_var/coef, color = firm_title), size = 0.75) +
+    scale_color_manual(values = c("dodgerblue3", "darkorange2")) +
+    scale_y_continuous(sec.axis = sec_axis(trans = ~ . * coef,
+                                           name = NULL)) +
+    labs(x = NULL,
+         y = NULL,
+         color = NULL) +
+    theme_minimal() +
+    theme(axis.text.y.left = element_text(color = "darkorange2", face = "bold"),
+          axis.text.y.right = element_text(color = "dodgerblue3", face = "bold"))
+}
+
 make_figure <- function(ids, df, ntl_var, firm_var, title){
   p_all <- lapply(ids, make_figure_i, df, ntl_var, firm_var)
   
@@ -77,38 +110,7 @@ make_figure <- function(ids, df, ntl_var, firm_var, title){
   return(p)
 }
 
-make_figure_i <- function(id, df, ntl_var, firm_var){
-  df_i <- df[df$id %in% id,] 
-  
-  if(grepl("firm", firm_var))   firm_title <- "N Firms"
-  if(grepl("employ", firm_var)) firm_title <- "Employment"
-  
-  if(grepl("viirs", ntl_var))   sat_title <- "VIIRS"
-  if(grepl("dmspo", ntl_var)) sat_title <- "DMSP-OLS"
-  
-  df_i$ntl_var <- df_i[[ntl_var]]
-  df_i$firm_var <- df_i[[firm_var]]
-  
-  ntl_max <- df_i$ntl_var %>% max(na.rm=T)
-  firm_max <- df_i$firm_var %>% max(na.rm=T)
-  
-  coef <- firm_max / ntl_max 
-  if(coef < 1) coef <- 1
-  
-  df_i %>% 
-    ggplot() +
-    geom_line(aes(x = year, y = ntl_var, color = sat_title), size = 1.25) +
-    geom_line(aes(x = year, y = firm_var/coef, color = firm_title), size = 0.75) +
-    scale_color_manual(values = c("dodgerblue3", "darkorange2")) +
-    scale_y_continuous(sec.axis = sec_axis(trans = ~ . * coef,
-                                           name = NULL)) +
-    labs(x = NULL,
-         y = NULL,
-         color = NULL) +
-    theme_minimal() +
-    theme(axis.text.y.left = element_text(color = "darkorange2", face = "bold"),
-          axis.text.y.right = element_text(color = "dodgerblue3", face = "bold"))
-}
+
 
 # Make Figures -----------------------------------------------------------------
 p <- make_figure(can_dmspols_firms_id, can, "dmspolselvidge_mean", "N_firms_sum_all", "Canada, N Firms vs. DMSP-OLS")
@@ -130,3 +132,4 @@ ggsave(p, filename = file.path(figures_file_path, "mex_viirs_firms_cor_examples.
 
 p <- make_figure(mex_viirs_employ_id, mex_viirs, "viirs_mean", "employment_sum_all", "Mexico, Employment vs. VIIRS")
 ggsave(p, filename = file.path(figures_file_path, "mex_viirs_employ_cor_examples.png"), height = 5, width = 12)
+
