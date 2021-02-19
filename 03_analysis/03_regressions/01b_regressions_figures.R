@@ -17,8 +17,9 @@ industry_var_i <- "employment_sum_all_log"
 # Figure Function --------------------------------------------------------------
 make_figure <- function(df, country_i, FE_i){
   
-  if(FE_i %in% "year_id") title <- "Year and ID Fixed Effects"
+  if(FE_i %in% "year_id") title <- "Year and Unit Fixed Effects"
   if(FE_i %in% "yr")      title <- "Year Fixed Effects"
+  if(FE_i %in% "id")      title <- "Unit Fixed Effects"
   
  df %>%
     filter(country %in% country_i,
@@ -49,16 +50,18 @@ for(industry_var_i in c("employment_sum_all_log", "N_firms_sum_all_log")){
   
   p_yrid_mex <- make_figure(df, "mexico", "year_id")
   p_yr_mex   <- make_figure(df, "mexico", "yr")
+  p_id_mex   <- make_figure(df, "mexico", "id")
   
   p_yrid_can <- make_figure(df, "canada", "year_id")
   p_yr_can   <- make_figure(df, "canada", "yr")
-
-  p_can <- ggarrange(p_yr_can, p_yrid_can,
+  p_id_can   <- make_figure(df, "canada", "id")
+  
+  p_can <- ggarrange(p_yr_can, p_id_can, p_yrid_can,
                      ncol = 1) %>%
     annotate_figure(top = text_grob("Canada", 
                                     color = "black", face = "bold", size = 14))
   
-  p_mex <- ggarrange(p_yr_mex, p_yrid_mex,
+  p_mex <- ggarrange(p_yr_mex, p_id_mex, p_yrid_mex,
                      ncol = 1) %>%
     annotate_figure(top = text_grob("Mexico", 
                                     color = "black", face = "bold", size = 14))
@@ -69,7 +72,7 @@ for(industry_var_i in c("employment_sum_all_log", "N_firms_sum_all_log")){
                                     color = "black", face = "bold", size = 14))
   
   
-  ggsave(p, filename = file.path(figures_file_path, paste0("reg_fig_",industry_var_i,".png")), height = 6, width=15)
+  ggsave(p, filename = file.path(figures_file_path, paste0("reg_fig_",industry_var_i,".png")), height = 9, width=15)
   
   
 } 

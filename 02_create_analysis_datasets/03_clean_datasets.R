@@ -40,37 +40,43 @@ for(country in c("canada", "mexico")){
       data$group.x <- NULL
       data$group.y <- NULL
       
-      # Subset Data ----------------------------------------------------------------
-      # Only keep cells that had positive light or a firm at some point
-      data <- data %>%
-        group_by(id) %>%
-        mutate(firms_positive_anyyear   = sum(N_firms_sum_all, na.rm=T) > 0,
-               dmspols_positive_anyyear = sum(dmspols_sum, na.rm=T) > 0,
-               viirs_positive_anyyear   = sum(viirs_sum, na.rm=T) > 0) %>%
-        ungroup() %>%
-        dplyr::filter(firms_positive_anyyear | dmspols_positive_anyyear | viirs_positive_anyyear)
-      
-      #### Remove unneeded variables
-      specific_vars_to_rm <- c("group.x", "group.y")
-      firmsmean_var_to_rm <- names(data)[grepl("firms_mean", names(data))] # only need sum
-      employmean_var_to_rm <- names(data)[grepl("employment_mean", names(data))] # only need sum (for now?)
-      
-      vars_to_rm <- c(specific_vars_to_rm,
-                      firmsmean_var_to_rm,
-                      employmean_var_to_rm)
-      
-      data <- data %>%
-        dplyr::select(-all_of(vars_to_rm))
-      
-      vars_to_keep <- names(data)[!grepl("_[[:digit:]][[:digit:]]", names(data))]
-      data <- data[,vars_to_keep]
-      
       # Firms: If NA, then 0 -------------------------------------------------------
       firm_vars <- names(data)[grepl("firms|employment", names(data))]
       
       for(var in firm_vars){
         data[[var]][is.na(data[[var]])] <- 0
       }
+      
+      # Subset Data ----------------------------------------------------------------
+      # NO: Only keep cells that had positive light or a firm at some point
+      # Only keep cells that had a firm at some point
+      data <- data %>%
+        group_by(id) %>%
+        #mutate(firms_positive_anyyear   = max(N_firms_sum_all, na.rm=T) > 0,
+        #       dmspols_positive_anyyear = max(dmspols_sum, na.rm=T) > 0,
+        #       viirs_positive_anyyear   = max(viirs_sum, na.rm=T) > 0) %>%
+        mutate(firms_positive_anyyear   = max(N_firms_sum_all, na.rm=T) > 0) %>%
+        ungroup() %>%
+        #dplyr::filter(firms_positive_anyyear | dmspols_positive_anyyear | viirs_positive_anyyear)
+        dplyr::filter(firms_positive_anyyear %in% T)
+      
+      #### Remove unneeded variables
+      specific_vars_to_rm <- c("group.x", "group.y")
+      firmsmean_var_to_rm <- names(data)[grepl("firms_mean", names(data))] # only need sum
+      employmean_var_to_rm <- names(data)[grepl("employment_mean|empl_med_fact_mean|empl_med_mean", names(data))] # only need sum (for now?)
+      employmean_other_var_to_rm <- names(data)[grepl("empl_med_fact_sum_[[:digit:]]|empl_med_sum_[[:digit:]]", names(data))] # only need sum (for now?)
+      
+      vars_to_rm <- c(specific_vars_to_rm,
+                      firmsmean_var_to_rm,
+                      employmean_var_to_rm,
+                      employmean_other_var_to_rm)
+      
+      data <- data[,!(names(data) %in% vars_to_rm)]
+      #data <- data %>%
+      #  dplyr::select(-all_of(vars_to_rm))
+      
+      #vars_to_keep <- names(data)[!grepl("_[[:digit:]][[:digit:]]", names(data))]
+      #data <- data[,vars_to_keep]
       
       # Transform Variables --------------------------------------------------------
       variables <- names(data)[grepl("dmspols|firms|employment|empl|viirs", names(data))]

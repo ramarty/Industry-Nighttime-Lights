@@ -77,6 +77,9 @@ firmdata_df$empl_med[grepl("251", firmdata_df$per_ocu)]             <- 300 # 251
 ## Factor Variable
 firmdata_df$empl_med_fact <- firmdata_df$empl_med %>% as.factor() %>% as.numeric()
 
+## Use empl_med in years without employment
+firmdata_df$employment[!(firmdata_df$year %in% 2019)] <- firmdata_df$empl_med[!(firmdata_df$year %in% 2019)]
+
 ## Rename/Mutate
 firmdata_df <- firmdata_df %>%
   dplyr::rename(naics6   = codigo_act,
