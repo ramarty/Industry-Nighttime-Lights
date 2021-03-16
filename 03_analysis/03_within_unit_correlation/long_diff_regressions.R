@@ -96,6 +96,10 @@ stargazer(mex_1,
           column.sep.width = "8pt",
           #report="vcs*",
           digits = 2,
+          add.lines = list(
+            c("Base Year", rep(c(2014, 2014, 2004, 2004), 2)),
+            c("End Year", rep(c(2019, 2019, 2014, 2014), 2))
+          ),
           out=file.path(tables_file_path, "lm_longdiff_mex.tex"))
 
 stargazer(can_1,
@@ -125,5 +129,9 @@ stargazer(can_1,
           column.sep.width = "8pt",
           #report="vcs*",
           digits = 2,
+          add.lines = list(
+            c("Base Year", rep(c(2011, 2011, 2001, 2001), 2)),
+            c("End Year", rep(c(2013), 8))
+          ),
           out=file.path(tables_file_path, "lm_longdiff_can.tex"))
 

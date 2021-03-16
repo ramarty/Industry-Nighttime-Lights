@@ -235,6 +235,19 @@ extract_ntl <- function(year, polygon, country, ntl_type){
                               paste0(country,"_dmspols_",year_ntl,".tif")))
   }
   
+  if(ntl_type %in% "dmspolsharmon"){
+    country_iso <- country %>% substring(1,3) %>% toupper()
+    
+    if(year_ntl <= 2013){
+      ntl_r <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED", 
+                                paste0("Harmonized_DN_NTL_",year_ntl,"_calDMSP_",country_iso,".tif")))
+    } else{
+      ntl_r <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED", 
+                                paste0("Harmonized_DN_NTL_",year_ntl,"_simVIIRS_",country_iso,".tif")))
+    }
+
+  }
+  
   if(ntl_type %in% "dmspolszhang"){
     ntl_r <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_Zhang", "FinalData",
                               paste0(country,"_dmspolszhang_",year_ntl,".tif")))

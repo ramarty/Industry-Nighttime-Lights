@@ -114,22 +114,22 @@ make_figure <- function(ids, df, ntl_var, firm_var, title){
 
 # Make Figures -----------------------------------------------------------------
 p <- make_figure(can_dmspols_firms_id, can, "dmspolselvidge_mean", "N_firms_sum_all", "Canada, N Firms vs. DMSP-OLS")
-ggsave(p, filename = file.path(figures_file_path, "can_dmspols_firms_cor_examples.png"), height = 5, width = 12)
+ggsave(p, filename = file.path(figures_file_path, "can_dmspols_firms_cor_examples.png"), height = 4, width = 12)
 
 p <- make_figure(can_dmspols_employ_id, can, "dmspolselvidge_mean", "employment_sum_all", "Canada, Employment vs. DMSP-OLS")
-ggsave(p, filename = file.path(figures_file_path, "can_dmspols_employ_cor_examples.png"), height = 5, width = 12)
+ggsave(p, filename = file.path(figures_file_path, "can_dmspols_employ_cor_examples.png"), height = 4, width = 12)
 
 
 p <- make_figure(mex_dmspols_firms_id, mex_dmspols, "dmspolselvidge_mean", "N_firms_sum_all", "Mexico, N Firms vs. DMSP-OLS")
-ggsave(p, filename = file.path(figures_file_path, "mex_dmspols_firms_cor_examples.png"), height = 5, width = 12)
+ggsave(p, filename = file.path(figures_file_path, "mex_dmspols_firms_cor_examples.png"), height = 4, width = 12)
 
 p <- make_figure(mex_dmspols_employ_id, mex_dmspols, "dmspolselvidge_mean", "employment_sum_all", "Mexico, Employment vs. DMSP-OLS")
-ggsave(p, filename = file.path(figures_file_path, "mex_dmspols_employ_cor_examples.png"), height = 5, width = 12)
+ggsave(p, filename = file.path(figures_file_path, "mex_dmspols_employ_cor_examples.png"), height = 4, width = 12)
 
 
 p <- make_figure(mex_viirs_firms_id, mex_viirs, "viirs_mean", "N_firms_sum_all", "Mexico, N Firms vs. VIIRS")
-ggsave(p, filename = file.path(figures_file_path, "mex_viirs_firms_cor_examples.png"), height = 5, width = 12)
+ggsave(p, filename = file.path(figures_file_path, "mex_viirs_firms_cor_examples.png"), height = 4, width = 12)
 
 p <- make_figure(mex_viirs_employ_id, mex_viirs, "viirs_mean", "employment_sum_all", "Mexico, Employment vs. VIIRS")
-ggsave(p, filename = file.path(figures_file_path, "mex_viirs_employ_cor_examples.png"), height = 5, width = 12)
+ggsave(p, filename = file.path(figures_file_path, "mex_viirs_employ_cor_examples.png"), height = 4, width = 12)
 

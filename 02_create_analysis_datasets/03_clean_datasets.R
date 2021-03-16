@@ -61,12 +61,12 @@ for(country in c("canada", "mexico")){
         dplyr::filter(firms_positive_anyyear %in% T)
       
       #### Remove unneeded variables
-      specific_vars_to_rm <- c("group.x", "group.y")
+      #specific_vars_to_rm <- c("group.x", "group.y")
       firmsmean_var_to_rm <- names(data)[grepl("firms_mean", names(data))] # only need sum
       employmean_var_to_rm <- names(data)[grepl("employment_mean|empl_med_fact_mean|empl_med_mean", names(data))] # only need sum (for now?)
       employmean_other_var_to_rm <- names(data)[grepl("empl_med_fact_sum_[[:digit:]]|empl_med_sum_[[:digit:]]", names(data))] # only need sum (for now?)
       
-      vars_to_rm <- c(specific_vars_to_rm,
+      vars_to_rm <- c(#specific_vars_to_rm,
                       firmsmean_var_to_rm,
                       employmean_var_to_rm,
                       employmean_other_var_to_rm)
@@ -112,12 +112,12 @@ for(country in c("canada", "mexico")){
       data_diffs_list <- lapply(1:MAX_DIFF, function(i){
         print(i)
         
-        calc_diffi <- function(var) var - lag(var, i)
+        calc_diffi <- function(var, i) var - lag(var, i)
         
         data_diffi <- data %>%
           dplyr::arrange(year) %>%
           dplyr::group_by(id) %>%
-          dplyr::mutate_at(vars(-id, -year), calc_diffi) %>%
+          dplyr::mutate_at(vars(-id, -year), ~calc_diffi(., i)) %>%
           dplyr::ungroup() %>%
           dplyr::select(-lat, -lon)
         

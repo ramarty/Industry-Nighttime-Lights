@@ -1,32 +1,73 @@
 # Correlation Figure: Changes
 
+# http://www.sthda.com/english/wiki/ggplot2-violin-plot-quick-start-guide-r-software-and-data-visualization
+
 country <- "Mexico"
 firm_var_i <- "employment_sum_all"
+ntl_var_i <- "VIIRS"
 
-# Load/Prep Data ---------------------------------------------------------------
-df_out_all <- readRDS(file.path(data_file_path, "Results", "polygon_correlation_results.Rds"))
+# Load/Prep Within Unit Correlation --------------------------------------------
+cor_within <- readRDS(file.path(data_file_path, "Results", "correlation_within_unit.Rds"))
+cor_within <- cor_within %>%
+  dplyr::filter(!is.na(cor),
+                #transform == "log",
+                unit %in% c("5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid"),
+                ntl_var %in% c("dmspolszhang_mean", "viirs_mean")) %>%
+  dplyr::mutate(ntl_var = case_when(ntl_var %in% "dmspolszhang_mean" ~ "DMSP-OLS",
+                                    ntl_var %in% "viirs_mean"        ~ "VIIRS"),
+                unit = unit %>% 
+                  str_replace_all(" Grid", "") %>%
+                  factor(levels = c("5km", "10km", "25km", "50km", "100km")))
 
-# dmspols_mean, dmspolselvidge_mean, dmspolszhang_mean
-df_out_all$ntl_var <- df_out_all$ntl_var %>% as.character()
-df_out_all <- df_out_all[!(df_out_all$ntl_var %in% c("dmspols_mean", "dmspolselvidge_mean")),]
-df_out_all$ntl_var[df_out_all$ntl_var %in% "dmspolszhang_mean"] <- "DMSP-OLS"
-df_out_all$ntl_var[df_out_all$ntl_var %in% "viirs_mean"] <- "VIIRS"
+cor_within %>%
+  dplyr::filter(country %in% "Mexico",
+                transform %in% "level",
+                firm_var %in% "N_firms_sum_all",
+                ntl_var %in% "DMSP-OLS") %>%
+  ggplot(aes(x = cor, y = unit)) +
+  geom_violin() 
 
-df_out_all$transform <- df_out_all$transform %>% as.character()
-df_out_all$transform[df_out_all$transform %in% "log"]   <- "Logs"
-df_out_all$transform[df_out_all$transform %in% "level"] <- "Levels"
+cor_within %>%
+  dplyr::filter(country %in% "Mexico",
+                transform %in% "level",
+                firm_var %in% "N_firms_sum_all",
+                ntl_var %in% "DMSP-OLS") %>%
+  ggplot(aes(x = cor)) +
+  geom_histogram() +
+  facet_wrap(~unit, 
+             scale = "free_y",
+             strip.position = "left",
+             ncol = 1) +
+  theme(strip.background = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line.y = element_blank()) +
+  theme(strip.text = element_text(angle=0))
 
-df_out_all <- df_out_all %>%
+# Load/Prep Across Unit Correlation --------------------------------------------
+cor_across <- readRDS(file.path(data_file_path, "Results", "polygon_correlation_results.Rds"))
+
+# Subset/Prep
+cor_across <- cor_across %>%
+  mutate(ntl_var = ntl_var %>% as.character,
+         transform = transform %>% as.character) %>%
   filter(difference != "level",
-         transform %in% c("Logs", "Levels"),
-         !(year %in% "All")) %>%
-  mutate(year = year %>% as.character() %>% as.numeric() %>% as.factor()) %>%
-  mutate(unit = unit %>% 
+         transform %in% c("log", "level"),
+         ntl_var %in% c("dmspolszhang_mean", "viirs_mean"),
+         !(year %in% "All"),
+         unit %in% c("5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid")) %>%
+  mutate(year = year %>% as.character() %>% as.numeric() %>% as.factor(),
+         unit = unit %>% 
            str_replace_all(" Grid", "") %>%
-           factor(levels = c("5km", "10km", "25km", "50km", "100km", "250km", "500km", "1000km")))
+           factor(levels = c("5km", "10km", "25km", "50km", "100km")),
+         ntl_var = case_when(ntl_var %in% "dmspolszhang_mean" ~ "DMSP-OLS",
+                             ntl_var %in% "viirs_mean"        ~ "VIIRS"),
+         transform = case_when(transform %in% "log"   ~ "Logs",
+                               transform %in% "level" ~ "Levels")) 
 
-df_out_all$firm_var[df_out_all$firm_var %in% "empl_med_sum_all" & 
-                      df_out_all$year %in% c(2017, 2018, 2020) &
+cor_across$firm_var[cor_across$firm_var %in% "empl_med_sum_all" & 
+                      cor_across$year %in% c(2017, 2018, 2020) &
                       country %in% "Mexico"] <- "employment_sum_all"
 
 # Make Figure Function ---------------------------------------------------------
@@ -48,9 +89,9 @@ make_figure <- function(firm_var_i, ntl_var_i, country, df_out_all){
   if(country %in% "Mexico" & ntl_var_i %in% "VIIRS")    df_out_all$difference <- df_out_all$difference * 1
   if(country %in% "Mexico" & ntl_var_i %in% "DMSP-OLS") df_out_all$difference <- df_out_all$difference * 5
   if(country %in% "Canada")                             df_out_all$difference <- df_out_all$difference * 2
-
+  
   df_out_all$difference <- df_out_all$difference %>% as.factor()
-
+  
   title <- country
   
   df_out_all %>%

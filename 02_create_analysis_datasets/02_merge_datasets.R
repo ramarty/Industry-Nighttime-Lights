@@ -44,6 +44,8 @@ for(country in c("mexico", "canada")){
     ## Merge datasets
     # Reduce allows merging a list of datasets together
     data_merged <- Reduce(function(x, y) merge(x, y, by = c("id", "year"), all=TRUE), data_files)
+    data_merged$group.y <- NULL
+    data_merged$group.x <- NULL
     
     # Add coordinates
     data_merged <- merge(data_merged, coords_data, by="id")

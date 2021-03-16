@@ -68,10 +68,11 @@ for(country in c("Canada", "Mexico")){
               } 
               
               ## Difference
-              df_temp$firm_var_nodiff <- df_temp[[firm_var_i]] # If looking at differences
+              # If looking at differences
               # use non-diff variable later
               # in subsetting
-              
+              df_temp$firm_var_nodiff <- df_temp[[firm_var_i]] 
+
               if(difference != "level"){
                 ntl_var_i  <- paste0(ntl_var_i, "_", difference)
                 firm_var_i <- paste0(firm_var_i, "_", difference)
@@ -98,8 +99,7 @@ for(country in c("Canada", "Mexico")){
               
               ## Correlation
               if(nrow(df_temp) > 1){
-                print("cor!")
-                
+
                 cor_out <- cor.test(df_temp$ntl_var, df_temp$firm_var)
                 
                 ci <- cor_out$conf.int %>% as.numeric()
@@ -128,4 +128,7 @@ for(country in c("Canada", "Mexico")){
 }
 
 saveRDS(df_out_all, file.path(data_file_path, "Results", "polygon_correlation_results.Rds"))
+
+
+
 

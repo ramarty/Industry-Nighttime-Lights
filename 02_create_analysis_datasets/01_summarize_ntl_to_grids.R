@@ -2,7 +2,8 @@
 
 EXTRACT_DMSPOLS         <- F
 EXTRACT_DMSPOLSZHANG    <- F
-EXTRACT_DMSPOLSELVIDGE  <- T
+EXTRACT_DMSPOLSELVIDGE  <- F
+EXTRACT_DMSPOLSHARMON   <- T
 EXTRACT_VIIRS           <- F
 EXTRACT_VIIRS_CORRECTED <- F
 
@@ -10,7 +11,7 @@ for(country in c("canada", "mexico")){
   
   ## Prep Parmaeters
   country_cap <- capitalize(country)
-  
+
   if(country %in% "canada") FIRM_YEARS <- FIRM_YEARS_CANADA
   if(country %in% "mexico") FIRM_YEARS <- FIRM_YEARS_MEXICO
   
@@ -29,18 +30,25 @@ for(country in c("canada", "mexico")){
     polygon <- spTransform(polygon, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
     polygon$group <- 1
     
-    ## DMSPOLS
+    ## DMSPOLS - ZHANG
     print("dmspols zhang -----------------------------------------------------")
     if(EXTRACT_DMSPOLSZHANG){
       polygon_dmspols_z <- lapply(FIRM_YEARS[FIRM_YEARS <= 2014], extract_ntl, polygon, country, "dmspolszhang") %>% bind_rows()
       saveRDS(polygon_dmspols_z, file.path(OUT_PATH, paste0(grid_i,"_dmspolszhang_",".Rds")))
     }
     
-    ## DMSPOLS
+    ## DMSPOLS - ELVIDGE
     print("dmspols elvidge ---------------------------------------------------")
     if(EXTRACT_DMSPOLSELVIDGE){
       polygon_dmspols_e <- lapply(FIRM_YEARS[FIRM_YEARS <= 2014], extract_ntl, polygon, country, "dmspolselvidge") %>% bind_rows()
       saveRDS(polygon_dmspols_e, file.path(OUT_PATH, paste0(grid_i,"_dmspolselvidge_",".Rds")))
+    }
+    
+    ## DMSPOLS - HARMON
+    print("dmspols harmon ---------------------------------------------------")
+    if(EXTRACT_DMSPOLSHARMON){
+      polygon_dmspols_h <- lapply(FIRM_YEARS[FIRM_YEARS <= 2018], extract_ntl, polygon, country, "dmspolsharmon") %>% bind_rows()
+      saveRDS(polygon_dmspols_h, file.path(OUT_PATH, paste0(grid_i,"_dmspolsharmon_",".Rds")))
     }
     
     ## VIIRS

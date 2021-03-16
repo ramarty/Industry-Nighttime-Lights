@@ -1,8 +1,15 @@
-# Clean Firm Data
+# Create Urban and Rural Areas from GADM
 
 # Load Data --------------------------------------------------------------------
-can <- readRDS(file.path(data_file_path, "GADM", "RawData", "gadm36_CAN_1_sp.rds"))
+can <- readRDS(file.path(data_file_path, "GADM", "RawData", "gadm36_CAN_3_sp.rds"))
 mex <- readRDS(file.path(data_file_path, "GADM", "RawData", "gadm36_MEX_2_sp.rds"))
+
+leaflet() %>%
+  addTiles() %>%
+  addPolygons(data = can[can$NAME_1],
+              popup = ~NAME_3)
+
+
 
 MEX_mexico_city <- mex[mex$NAME_1 %in% "Distrito Federal",]
 
