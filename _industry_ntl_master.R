@@ -61,6 +61,7 @@ library(estimatr)
 library(readr)
 library(tidyr)
 library(ggpubr)
+library(stringi)
 library(leaflet)
 
 # User Defined Functions -------------------------------------------------------

@@ -20,7 +20,8 @@ city_to_grid_i <- function(i, city_sp, r){
   # --i: ith city (row in city_sp)
   # --city_sp: city polygon, with uid and city_name variables
   # --r: raster
-  if(i %% 10 %in% 0) print(paste(i, "/", nrow(city_sp)))
+  #if(i %% 10 %in% 0) print(paste(i, "/", nrow(city_sp)))
+  print(paste(i, "/", nrow(city_sp)))
   
   city_sp_i <- city_sp[i,]
   
@@ -29,8 +30,23 @@ city_to_grid_i <- function(i, city_sp, r){
     raster::mask(city_sp_i) %>%
     rasterToPolygons()
   
+  if(is.null(r_in_city)){
+    print("Expanding!")
+    city_sp_i <- gBuffer(city_sp_i, width = 0.5/111.12, byid = T)
+    
+    r_in_city <- r %>% 
+      raster::crop(city_sp_i) %>% 
+      raster::mask(city_sp_i) %>%
+      rasterToPolygons()
+  }
+  
+  #leaflet() %>% addTiles() %>% addPolygons(data = r_in_city) %>% addPolygons(data = city_sp_i)
+  
   r_in_city$city_uid  <- city_sp_i$city_uid
   r_in_city$city_name <- city_sp_i$city_name
+  
+  print(nrow(r_in_city))
+  if(nrow(r_in_city) %in% 0) Sys.sleep(300000)
   
   return(r_in_city)
 }
@@ -70,11 +86,11 @@ saveRDS(can_dmsp_sp[,"id"],    file.path(data_file_path, "Grid", "RawData","can_
 saveRDS(mex_dmsp_sp[,"id"],    file.path(data_file_path, "Grid", "RawData","mex_citygriddmsp.Rds"))
 
 ## With City Info
-saveRDS(can_viirs_sp,    file.path(data_file_path, "Grid", "FinalData", "canada", "can_citygridviirs_cityinfo.Rds"))
-saveRDS(mex_viirs_sp,    file.path(data_file_path, "Grid", "FinalData", "mexico", "mex_citygridviirs_cityinfo.Rds"))
+saveRDS(can_viirs_sp,    file.path(data_file_path, "Grid", "FinalData", "canada", "individual_datasets", "can_citygridviirs_cityinfo.Rds"))
+saveRDS(mex_viirs_sp,    file.path(data_file_path, "Grid", "FinalData", "mexico", "individual_datasets", "mex_citygridviirs_cityinfo.Rds"))
 
-saveRDS(can_dmsp_sp,    file.path(data_file_path, "Grid", "FinalData", "canada", "can_citygriddmsp_cityinfo.Rds"))
-saveRDS(mex_dmsp_sp,    file.path(data_file_path, "Grid", "FinalData", "mexico", "mex_citygriddmsp_cityinfo.Rds"))
+saveRDS(can_dmsp_sp,    file.path(data_file_path, "Grid", "FinalData", "canada", "individual_datasets", "can_citygriddmsp_cityinfo.Rds"))
+saveRDS(mex_dmsp_sp,    file.path(data_file_path, "Grid", "FinalData", "mexico", "individual_datasets", "mex_citygriddmsp_cityinfo.Rds"))
 
 
 

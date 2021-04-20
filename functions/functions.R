@@ -56,7 +56,11 @@ load_grid_data_no_type <- function(country, pattern, year, units = "all"){
              str_replace_all("_dmspols", "") %>%
              str_replace_all("_viirs", "") %>%
              paste0(" Grid"))
-  grid$unit <- grid$unit %>% factor(levels = c("5km", "10km", "25km", "50km", "100km", "250km", "500km", "1000km") %>%
+  
+  # No 250, 500 or 1000km grid
+  grid <- grid[!(grid$unit %in% c("250km Grid", "500km Grid", "1000km Grid")),]
+  
+  grid$unit <- grid$unit %>% factor(levels = c("5km", "10km", "25km", "50km", "100km") %>%
                                       paste0(" Grid"))
   
   if(units != "all") grid <- grid[grid$unit %in% units,]
@@ -84,7 +88,13 @@ collapse_firm_to_grid <- function(year, country_cap, r){
   firms_i$id <- NULL
   firms_i$naics2 <- firms_i$naics2 %>% as.character()
   
-  firms_i$poly_id <- raster::extract(r, firms_i) %>% as.numeric()
+  if(class(r) %in% "SpatialPolygonsDataFrame"){
+    firms_i$poly_id <- sp::over(firms_i, r)$id %>% as.vector()
+    
+  } else{
+    firms_i$poly_id <- raster::extract(r, firms_i) %>% as.numeric()
+  }
+  
   firms_i <- firms_i[!is.na(firms_i$poly_id),]
   
   # Collapse -------------------------------------------------------------------

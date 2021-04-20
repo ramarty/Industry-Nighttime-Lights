@@ -12,10 +12,14 @@ for(country in c("mexico", "canada")){
   grid_files <- list.files(file.path(data_file_path, "Grid", "RawData"), pattern = "*.Rds") %>%
     str_replace_all(".Rds", "") %>%
     str_subset(country %>% substring(1,3)) %>%
-    str_subset("_raster")
+    stri_subset_fixed("raster", negate = TRUE) %>%
+    str_subset("city")
   
   for(grid_i in grid_files){
     print(paste(grid_i, "----------------------------------------------------"))
+    
+    # If hexagon (not city), use raster approach
+    if(!grepl("city", grid_i)) grid_i <- paste0(grid_i, "_raster") 
     
     r <- readRDS(file.path(data_file_path, "Grid", "RawData", paste0(grid_i, ".Rds")))
     

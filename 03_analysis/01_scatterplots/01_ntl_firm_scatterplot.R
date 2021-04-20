@@ -27,7 +27,8 @@ make_figure <- function(df, x_var, y_var, x_var_title, y_var_title, title){
 }
 
 # Figures: Employment ----------------------------------------------------------
-for(industry_var in c("employment_sum_all_log", "N_firms_sum_all_log")){
+for(industry_var in c("employment_sum_all_log", 
+                      "N_firms_sum_all_log")){
   
   mex_dmspols$industry_var <- mex_dmspols[[industry_var]]
   mex_viirs$industry_var   <- mex_viirs[[industry_var]]
