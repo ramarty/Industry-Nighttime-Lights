@@ -20,7 +20,7 @@ city_to_grid_i <- function(i, city_sp, r){
   # --i: ith city (row in city_sp)
   # --city_sp: city polygon, with uid and city_name variables
   # --r: raster
-  print(paste(i, "/", nrow(city_sp)))
+  if(i %% 10 %in% 0) print(paste(i, "/", nrow(city_sp)))
   
   city_sp_i <- city_sp[i,]
   
