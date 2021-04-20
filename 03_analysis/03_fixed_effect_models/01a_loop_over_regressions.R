@@ -9,8 +9,8 @@ can         <- load_grid_data_no_type("canada", "*_clean.Rds",         "all")
 df_out_all <- data.frame(NULL)
 
 for(industry_var in c("employment_sum_all_log", "N_firms_sum_all_log")){
-  for(ntl_var in c("dmspols_mean_log", "dmspolselvidge_mean_log", "dmspolszhang_mean_log", "viirs_mean_log")){
-    for(unit in c("5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid", "250km Grid", "500km Grid", "1000km Grid")){
+  for(ntl_var in c("dmspolsharmon_mean_log", "dmspolselvidge_mean_log", "viirs_mean_log")){
+    for(unit in c("5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid")){
       for(country in c("mexico", "canada")){
         
         print(paste(industry_var, ntl_var, unit, country))

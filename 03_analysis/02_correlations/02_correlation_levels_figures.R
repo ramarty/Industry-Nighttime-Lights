@@ -53,9 +53,11 @@ make_figure <- function(firm_var_i, country, df_out_all){
                fill = ntl_var,
                ymin = ci_low,
                ymax = ci_high)) +
+    geom_hline(yintercept = 0, alpha = 0.5) +
     geom_linerange(position = position_dodge(width = 0.7)) +
     geom_point(position = position_dodge(width = 0.7),
                pch = 21) +
+    ylim(c(0,1)) +
     scale_fill_manual(values = c("white", "black")) +
     labs(title = title,
          y = "Correlation Coefficient (+/- 95% CI)",

@@ -5,17 +5,22 @@ mex_dmspols <- load_grid_data_no_type("mexico", "*_dmspols_clean.Rds", "all")
 mex_viirs   <- load_grid_data_no_type("mexico", "*_viirs_clean.Rds",   "all")
 can         <- load_grid_data_no_type("canada", "*_clean.Rds",         "all")
 
+# Only use DMSP-Harmon data in the time frame
+#can$dmspolsharmon_mean[can$year > 2013] <- NA
+#mex_viirs$dmspolsharmon_mean[mex_viirs$year > 2013] <- NA
+#mex_dmspols$dmspolsharmon_mean[mex_dmspols$year > 2013] <- NA
+
 # Correlation ------------------------------------------------------------------
 country <- "Canada"
-ntl_var <- "dmspols_mean"
+ntl_var <- "dmspolsharmon_mean"
 year <- "2001"
 unit <- "25km Grid"
 firm_var <- "employment_sum_all"
-difference <- "level"
+transform <- "log"
 
 df_out_all <- data.frame(NULL)
 for(country in c("Canada", "Mexico")){
-  for(ntl_var in c("dmspols_mean", "dmspolselvidge_mean", "dmspolszhang_mean", "viirs_mean")){
+  for(ntl_var in c("dmspols_mean", "dmspolsharmon_mean", "viirs_mean")){
     
     ## Grab dataset
     if(country %in% "Canada")                             df <- can
@@ -29,7 +34,7 @@ for(country in c("Canada", "Mexico")){
       for(firm_var in c("employment_sum_all", "firms_sum_all",
                         "empl_med_sum_all", "N_firms_sum_all")){
         for(transform in c("level", "log")){
-          print(paste(year, country, unit, difference, transform, ntl_var, firm_var, sep = " - "))
+          print(paste(year, country, unit, transform, ntl_var, firm_var, sep = " - "))
           
           ## Define base data and variables
           df_temp    <- df
@@ -70,7 +75,11 @@ for(country in c("Canada", "Mexico")){
             
             df_out <- df_temp %>%
               group_by(id) %>%
-              dplyr::summarise(cor = cor(ntl_var, firm_var))
+              dplyr::summarise(cor = cor(ntl_var, firm_var),
+                               ntl_var_min = min(ntl_var),
+                               ntl_var_max = max(ntl_var),
+                               firm_var_min = min(firm_var),
+                               firm_var_max = max(firm_var))
             
             df_out$country <- country
             df_out$ntl_var <- ntl_var

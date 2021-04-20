@@ -5,6 +5,10 @@ mex_dmspols <- load_grid_data_no_type("mexico", "*_dmspols_clean.Rds", "all")
 mex_viirs   <- load_grid_data_no_type("mexico", "*_viirs_clean.Rds",   "all")
 can         <- load_grid_data_no_type("canada", "*_clean.Rds",         "all")
 
+can         <- can[!(can$unit %in% c("250km Grid", "500km Grid", "1000km Grid")),]
+mex_viirs   <- mex_viirs[!(mex_viirs$unit %in% c("250km Grid", "500km Grid", "1000km Grid")),]
+mex_dmspols <- mex_dmspols[!(mex_dmspols$unit %in% c("250km Grid", "500km Grid", "1000km Grid")),]
+
 # Correlation ------------------------------------------------------------------
 country <- "Canada"
 ntl_var <- "dmspols_mean"
@@ -15,7 +19,7 @@ difference <- "level"
 
 df_out_all <- data.frame(NULL)
 for(country in c("Canada", "Mexico")){
-  for(ntl_var in c("dmspols_mean", "dmspolselvidge_mean", "dmspolszhang_mean", "viirs_mean")){
+  for(ntl_var in c("dmspols_mean", "dmspolsharmon_mean", "viirs_mean")){
     
     ## Grab dataset
     if(country %in% "Canada")                             df <- can
@@ -35,8 +39,7 @@ for(country in c("Canada", "Mexico")){
     
     for(year in c(YEARS, "All")){
       for(unit in UNITS){
-        for(firm_var in c("employment_sum_all", "firms_sum_all",
-                          "empl_med_sum_all", "N_firms_sum_all")){
+        for(firm_var in c("employment_sum_all", "empl_med_sum_all", "N_firms_sum_all")){
           for(transform in c("level", "log")){
             for(difference in c("level", paste0("diff",1:MAX_DIFF))){
               print(paste(year, country, unit, difference, transform, ntl_var, firm_var, sep = " - "))
