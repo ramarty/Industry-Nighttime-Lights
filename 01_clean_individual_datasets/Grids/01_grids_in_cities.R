@@ -52,14 +52,30 @@ mex_dmsp_sp <- lapply(1:nrow(mex_cities), city_to_grid_i, mex_cities, mex_dmsp) 
 #### Assign ID
 can_viirs_sp$id <- 1:nrow(can_viirs_sp)
 mex_viirs_sp$id <- 1:nrow(mex_viirs_sp)
-can_dmsp_sp$id <- 1:nrow(can_dmsp_sp)
-mex_dmsp_sp$id <- 1:nrow(mex_dmsp_sp)
+can_dmsp_sp$id  <- 1:nrow(can_dmsp_sp)
+mex_dmsp_sp$id  <- 1:nrow(mex_dmsp_sp)
+
+#### Only keep select variables
+can_viirs_sp@data <- can_viirs_sp@data %>% dplyr::select(id, city_uid, city_name)
+mex_viirs_sp@data <- mex_viirs_sp@data %>% dplyr::select(id, city_uid, city_name)
+can_dmsp_sp@data  <- can_dmsp_sp@data  %>% dplyr::select(id, city_uid, city_name)
+mex_dmsp_sp@data  <- mex_dmsp_sp@data  %>% dplyr::select(id, city_uid, city_name)
 
 # Export -----------------------------------------------------------------------
-saveRDS(can_viirs_sp,    file.path(data_file_path, "Grid", "RawData","can_citygridviirs.Rds"))
-saveRDS(mex_viirs_sp,    file.path(data_file_path, "Grid", "RawData","mex_citygridviirs.Rds"))
+## RawData
+saveRDS(can_viirs_sp[,"id"],    file.path(data_file_path, "Grid", "RawData","can_citygridviirs.Rds"))
+saveRDS(mex_viirs_sp[,"id"],    file.path(data_file_path, "Grid", "RawData","mex_citygridviirs.Rds"))
 
-saveRDS(can_dmsp_sp,    file.path(data_file_path, "Grid", "RawData","can_citygriddmsp.Rds"))
-saveRDS(mex_dmsp_sp,    file.path(data_file_path, "Grid", "RawData","mex_citygriddmsp.Rds"))
+saveRDS(can_dmsp_sp[,"id"],    file.path(data_file_path, "Grid", "RawData","can_citygriddmsp.Rds"))
+saveRDS(mex_dmsp_sp[,"id"],    file.path(data_file_path, "Grid", "RawData","mex_citygriddmsp.Rds"))
+
+## With City Info
+saveRDS(can_viirs_sp,    file.path(data_file_path, "Grid", "FinalData", "canada", "can_citygridviirs_cityinfo.Rds"))
+saveRDS(mex_viirs_sp,    file.path(data_file_path, "Grid", "FinalData", "mexico", "mex_citygridviirs_cityinfo.Rds"))
+
+saveRDS(can_dmsp_sp,    file.path(data_file_path, "Grid", "FinalData", "canada", "can_citygriddmsp_cityinfo.Rds"))
+saveRDS(mex_dmsp_sp,    file.path(data_file_path, "Grid", "FinalData", "mexico", "mex_citygriddmsp_cityinfo.Rds"))
+
+
 
 
