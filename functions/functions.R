@@ -89,7 +89,7 @@ collapse_firm_to_grid <- function(year, country_cap, r){
   firms_i$naics2 <- firms_i$naics2 %>% as.character()
   
   if(class(r) %in% "SpatialPolygonsDataFrame"){
-    firms_i$poly_id <- sp::over(firms_i, r)$id %>% as.vector()
+    firms_i$poly_id <- over_chunks(firms_i, r, "none", 100000)$id %>% as.vector()
     
   } else{
     firms_i$poly_id <- raster::extract(r, firms_i) %>% as.numeric()

@@ -18,14 +18,17 @@ mex_cities@data <- mex_cities@data %>%
   dplyr::select(OBJECTID, city_name) %>%
   dplyr::rename(city_uid = OBJECTID)
 
+mex_cities <- spTransform(mex_cities, 
+                          CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
 # Export -----------------------------------------------------------------------
 saveRDS(mex_cities, file.path(data_file_path, "Cities in Mexico", "FinalData",
-                                  "mex_cities.Rds"))
+                              "mex_cities.Rds"))
 
 ## Checks
-mex_cities$uid %>% table %>% table
+mex_cities$city_uid %>% table %>% table
 mex_cities$city_name %>% table %>% table
 
-mex_cities$uid %>% is.na %>% table()
+mex_cities$city_uid %>% is.na %>% table()
 mex_cities$city_name %>% is.na %>% table()
 

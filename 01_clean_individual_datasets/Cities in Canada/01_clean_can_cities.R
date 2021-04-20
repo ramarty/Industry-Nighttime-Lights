@@ -32,14 +32,17 @@ can_cities_agg@data <- can_cities_agg@data %>%
   dplyr::select(PCUID, city_name) %>%
   dplyr::rename(city_uid = PCUID)
 
+can_cities_agg <- spTransform(can_cities_agg, 
+            CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
 # Export -----------------------------------------------------------------------
 saveRDS(can_cities_agg, file.path(data_file_path, "Cities in Canada", "FinalData",
                                   "can_cities.Rds"))
 
 ## Checks
-can_cities_agg$uid %>% table %>% table
+can_cities_agg$city_uid %>% table %>% table
 can_cities_agg$city_name %>% table %>% table
 
-can_cities_agg$uid %>% is.na %>% table()
+can_cities_agg$city_uid %>% is.na %>% table()
 can_cities_agg$city_name %>% is.na %>% table()
 
