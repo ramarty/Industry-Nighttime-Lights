@@ -214,7 +214,7 @@ extract_firm_stats <- function(polygon, firms_i){
   return(df_merged)
 }
 
-extract_ntl <- function(year, polygon, country, ntl_type){
+extract_ntl <- function(year, polygon, country, ntl_type, suffix = ""){
   print(paste(year, "------------------------------------------------------"))
   
   year_ntl <- year
@@ -306,9 +306,9 @@ extract_ntl <- function(year, polygon, country, ntl_type){
   
   polygon_data$year <- year
   
-  names(polygon_data)[names(polygon_data) %in% "ntl_mean"]   <- paste0(ntl_type, "_mean")
-  names(polygon_data)[names(polygon_data) %in% "ntl_median"] <- paste0(ntl_type, "_median")
-  names(polygon_data)[names(polygon_data) %in% "ntl_sum"]    <- paste0(ntl_type, "_sum")
+  names(polygon_data)[names(polygon_data) %in% "ntl_mean"]   <- paste0(ntl_type, "_mean",   suffix)
+  names(polygon_data)[names(polygon_data) %in% "ntl_median"] <- paste0(ntl_type, "_median", suffix)
+  names(polygon_data)[names(polygon_data) %in% "ntl_sum"]    <- paste0(ntl_type, "_sum",    suffix)
   
   return(polygon_data)
 }
@@ -367,4 +367,33 @@ create_hexagons <- function(spdf, cellsize, keep_inter_coord, coords_buff_agg_sf
   
   return(HexPols)
 }
+
+# Buffer and Remove Center -----------------------------------------------------
+remove_center_polygon <- function(polygon, polygon_buff){
+  # Uses polygon and polygon_buff as inputs. polygon_buff is a buffered version
+  # of polygon. Removes the 'polygon' area from 'polygon_buff'
+  
+  lapply(1:nrow(polygon), function(i){
+    if((i %% 100) %in% 0) print(paste0(i, " Erase Center"))
+    
+    raster::erase(polygon_buff[i,], polygon[i,])
+  }) %>% 
+    do.call(what = "rbind")
+  
+}
+
+buffer_rm_center <- function(polygon,
+                                 width,
+                                 chunk_size = 1000){
+  # Buffers polygon and removes original area
+  
+  polygon_buff <- gBuffer_chunks(polygon, width = width, chunk_size = chunk_size)
+  polygon_buff_nocenter <- remove_center_polygon(polygon, polygon_buff)
+  
+  return(polygon_buff_nocenter)
+}
+
+
+
+
 

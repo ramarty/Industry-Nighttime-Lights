@@ -1,5 +1,6 @@
 # Summarize data in polygons
 
+# LOOP OVER COUNTRY ------------------------------------------------------------
 for(country in c("canada", "mexico")){
   print(paste(country, "-----------------------------------------------------"))
   
@@ -12,9 +13,9 @@ for(country in c("canada", "mexico")){
   grid_files <- list.files(file.path(data_file_path, "Grid", "RawData"), pattern = "*.Rds") %>%
     str_replace_all(".Rds", "") %>%
     str_subset(country %>% substring(1,3)) %>%
-    stri_subset_fixed("raster", negate = TRUE) %>%
-    str_subset("city")
+    stri_subset_fixed("raster", negate = TRUE) 
   
+  # LOOP OVER GRID -------------------------------------------------------------
   for(grid_i in grid_files){
     print(paste(grid_i, "----------------------------------------------------"))
     
@@ -32,4 +33,5 @@ for(country in c("canada", "mexico")){
                               paste0(grid_i_name, ".Rds")))
   }
 }
+
 

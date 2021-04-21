@@ -5,6 +5,21 @@ mex_dmspols <- load_grid_data_no_type("mexico", "*_dmspols_clean.Rds", 2009)
 mex_viirs   <- load_grid_data_no_type("mexico", "*_viirs_clean.Rds",   2019)
 can         <- load_grid_data_no_type("canada", "*_clean.Rds",         2013)
 
+mex_dmspols <- mex_dmspols[mex_dmspols$unit %in% "5km Grid",]
+mex_dmspols$year %>% table()
+
+
+can <- can[can$unit %in% "5km Grid",]
+can$year %>% table()
+
+coordinates(can) <- ~lon+lat
+crs(can) <- CRS(PROJ_canada)
+can <- spTransform(can, CRS("+init=epsg:4326"))
+
+leaflet() %>% 
+  addTiles() %>%
+  addCircles(data = can)
+
 # Figures: Function ------------------------------------------------------------
 make_figure <- function(df, x_var, y_var, x_var_title, y_var_title, title){
   df$x_var <- df[[x_var]]
