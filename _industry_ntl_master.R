@@ -3,6 +3,9 @@
 
 RUN_SCRIPTS <- F
 
+options(dplyr.summarise.inform = FALSE)
+options(dplyr.rename.inform = FALSE)
+
 # Filepaths --------------------------------------------------------------------
 if(Sys.info()[["user"]] == "robmarty") overleaf_file_path <- "~/Dropbox/Apps/Overleaf/Industry and Nighttime Lights"
 
