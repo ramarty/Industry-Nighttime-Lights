@@ -46,7 +46,7 @@ for(country in c("canada", "mexico")){
     
     # LOOP OVER BUFFERS --------------------------------------------------------
     for(buffer_i in buffer_sizes){
-      print(paste(country, grid_i, buffer, "---------------------------------"))
+      print(paste(country, "//", grid_i, "//", buffer_i, "-------------------"))
       
       if(grepl("city", grid_i)) suffix_name <- paste0("_splag", buffer_i)
       if(grepl("hex",  grid_i)) suffix_name <- paste0("_splag", "unit")
@@ -54,6 +54,7 @@ for(country in c("canada", "mexico")){
       buffer_i_value <- buffer_i %>% str_replace_all("km", "") %>% as.numeric
       
       ## Buffer values
+      print(paste("TOTAL IDS:", length(unique(df$id))))
       df_splag <- map_df(unique(df$id), function(id_i){
         if((id_i %% 100) %in% 0) print(id_i)
         
