@@ -1,11 +1,11 @@
 # Summarize data in polygons
 
-EXTRACT_DMSPOLS         <- F
-EXTRACT_DMSPOLSZHANG    <- F
-EXTRACT_DMSPOLSELVIDGE  <- F
+EXTRACT_DMSPOLS         <- T
+EXTRACT_DMSPOLSZHANG    <- T
+EXTRACT_DMSPOLSELVIDGE  <- T
 EXTRACT_DMSPOLSHARMON   <- T
-EXTRACT_VIIRS           <- F
-EXTRACT_VIIRS_CORRECTED <- F
+EXTRACT_VIIRS           <- T
+EXTRACT_VIIRS_CORRECTED <- T
 
 for(country in c("canada", "mexico")){
   
@@ -18,7 +18,8 @@ for(country in c("canada", "mexico")){
   grid_files <- list.files(file.path(data_file_path, "Grid", "RawData"), pattern = "*.Rds") %>%
     stri_subset_fixed("raster", negate = TRUE)  %>% # remove "_raster.Rds"
     str_replace_all(".Rds", "") %>%
-    str_subset(country %>% substring(1,3)) 
+    str_subset(country %>% substring(1,3)) %>%
+    str_subset("city")
   
   OUT_PATH <- file.path(data_file_path, "Grid", "FinalData", country,  "individual_datasets")
   

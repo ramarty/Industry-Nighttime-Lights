@@ -12,7 +12,6 @@ df_out_all$ntl_var[df_out_all$ntl_var %in% "dmspols_mean"] <- "DMSP-OLS"
 df_out_all$ntl_var[df_out_all$ntl_var %in% "viirs_mean"] <- "VIIRS"
 
 df_out_all$transform <- df_out_all$transform %>% as.character()
-df_out_all$transform[df_out_all$transform %in% "log"]   <- "Logs"
 df_out_all$transform[df_out_all$transform %in% "level"] <- "Levels"
 
 ## Subset/Prep Variables
@@ -31,12 +30,18 @@ df_out_all$firm_var[df_out_all$firm_var %in% "empl_med_sum_all" &
                       df_out_all$year %in% c(2017, 2018, 2020) &
                       country %in% "Mexico"] <- "employment_sum_all"
 
+df_out_all <- df_out_all %>%
+  dplyr::filter(firm_var %in% c("N_firms_sum_all", "employment_sum_all")) %>%
+  dplyr::mutate(firm_var =
+                  case_when(firm_var %in% "N_firms_sum_all" ~ "N Firms",
+                            firm_var %in% "employment_sum_all" ~ "Employment"))
+
 # Make Figure Function ---------------------------------------------------------
-make_figure <- function(firm_var_i, country, df_out_all){
-
+make_figure <- function(country, df_out_all){
+  
   df_out_all <- df_out_all[df_out_all$country %in% country,]
-  df_out_all <- df_out_all[df_out_all$firm_var %in% firm_var_i,]
-
+  #df_out_all <- df_out_all[df_out_all$firm_var %in% firm_var_i,]
+  
   df_out_all <- df_out_all %>%
     filter(!is.na(b)) 
   N_colors <- df_out_all$year %>% unique() %>% length()
@@ -69,7 +74,7 @@ make_figure <- function(firm_var_i, country, df_out_all){
     #theme_minimal() +
     scale_color_manual(values = wes_palette("Zissou1", N_colors, type = "continuous")) +
     theme(plot.title = element_text(hjust = 0.5, face = "bold")) +
-    facet_wrap(~transform, 
+    facet_wrap(~firm_var, 
                #scales = "free_x",
                nrow=1) +
     coord_flip() 
@@ -77,23 +82,18 @@ make_figure <- function(firm_var_i, country, df_out_all){
 }
 
 # Make and Append Figures ------------------------------------------------------
-p_employ_mex <- make_figure("employment_sum_all", "Mexico", df_out_all)
-p_employ_can <- make_figure("employment_sum_all", "Canada", df_out_all)
+p_mex <- make_figure("Mexico", df_out_all)
+p_can <- make_figure("Canada", df_out_all)
 
-p_firms_mex <- make_figure("N_firms_sum_all", "Mexico", df_out_all)
-p_firms_can <- make_figure("N_firms_sum_all", "Canada", df_out_all)
+p <- ggarrange(p_mex,
+               p_can) 
+ggsave(p, filename = file.path(figures_file_path, "levels_cor.png"), height = 5, width=15)
 
-p_employ <- ggarrange(p_employ_can,
-                      p_employ_mex) %>%
-  annotate_figure(top = text_grob("Correlation with Nighttime Lights and Total Employment", 
-                                  color = "black", face = "bold", size = 14))
-ggsave(p_employ, filename = file.path(figures_file_path, "levels_cor_employment.png"), height = 5, width=15)
 
-p_firms <- ggarrange(p_firms_can,
-                     p_firms_mex)%>%
-  annotate_figure(top = text_grob("Correlation with Nighttime Lights and Total Number of Firms", 
-                                  color = "black", face = "bold", size = 14))
-ggsave(p_firms, filename = file.path(figures_file_path, "levels_cor_firms.png"), height = 5, width=15)
-
+# p_employ <- ggarrange(p_mex,
+#                       p_can) %>%
+#   annotate_figure(top = text_grob("Correlation with Nighttime Lights and Total Employment", 
+#                                   color = "black", face = "bold", size = 14))
+# ggsave(p_employ, filename = file.path(figures_file_path, "levels_cor_employment.png"), height = 5, width=15)
 
 

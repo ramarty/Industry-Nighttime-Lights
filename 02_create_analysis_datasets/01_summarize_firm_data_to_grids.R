@@ -1,6 +1,6 @@
 # Summarize data in polygons
 
-for(country in c("mexico", "canada")){
+for(country in c("canada", "mexico")){
   print(paste(country, "-----------------------------------------------------"))
   
   ## Prep Parmaeters
@@ -26,12 +26,10 @@ for(country in c("mexico", "canada")){
     df_all <- lapply(FIRM_YEARS, collapse_firm_to_grid, country_cap, r) %>%
       bind_rows()
     
+    grid_i_name <- grid_i %>% str_replace_all("_raster", "") %>% paste0("_firms")
     saveRDS(df_all, file.path(data_file_path, "Grid", "FinalData", country, 
                               "individual_datasets",
-                              paste0(grid_i %>% 
-                                       str_replace_all("_raster",
-                                                       "_firms"), 
-                                     ".Rds")))
+                              paste0(grid_i_name, ".Rds")))
   }
 }
 

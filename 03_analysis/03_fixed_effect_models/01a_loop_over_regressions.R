@@ -5,6 +5,10 @@ mex_dmspols <- load_grid_data_no_type("mexico", "*_dmspols_clean.Rds", "all")
 mex_viirs   <- load_grid_data_no_type("mexico", "*_viirs_clean.Rds",   "all")
 can         <- load_grid_data_no_type("canada", "*_clean.Rds",         "all")
 
+mex_dmspols$year %>% table()
+mex_viirs$year %>% table()
+can$year %>% table()
+
 # Estimate Models --------------------------------------------------------------
 df_out_all <- data.frame(NULL)
 
