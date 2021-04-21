@@ -46,6 +46,7 @@ for(country in c("canada", "mexico")){
     
     # LOOP OVER BUFFERS --------------------------------------------------------
     for(buffer_i in buffer_sizes){
+      print(paste(country, grid_i, buffer, "---------------------------------"))
       
       if(grepl("city", grid_i)) suffix_name <- paste0("_splag", buffer_i)
       if(grepl("hex",  grid_i)) suffix_name <- paste0("_splag", "unit")
