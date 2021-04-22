@@ -25,8 +25,7 @@ for(country in c("canada", "mexico")){
   
   # LOOP OVER GRID -------------------------------------------------------------
   for(grid_i in grid_files){
-    print(paste(grid_i, "----------------------------------------------------"))
-    
+
     # Deterimine buffer to use (for spatial lag)
     if(grepl("city", grid_i)) buffer_sizes <- c("none", "1km", "2km", "5km", "10km")
     
@@ -37,6 +36,7 @@ for(country in c("canada", "mexico")){
     
     # LOOP OVER BUFFER ---------------------------------------------------------
     for(buffer_i in buffer_sizes){
+      print(paste(buffer_i, grid_i, country, "-------------------------------"))
       
       suffix_name <- ""
       polygon <- readRDS(file.path(data_file_path, "Grid", "RawData", paste0(grid_i, ".Rds")))
@@ -84,7 +84,7 @@ for(country in c("canada", "mexico")){
       
       ## VIIRS Corrected
       print("viirs corrected ---------------------------------------------------")
-      if(EXTRACT_VIIRS_CORRECTED & country %in% "mexico"){
+      if(EXTRACT_VIIRS_CORRECTED & (country %in% "mexico")){
         polygon_viirs_c <- lapply(FIRM_YEARS[FIRM_YEARS >= 2014], extract_ntl, polygon, country, "viirs_corrected", suffix_name) %>% bind_rows()
         saveRDS(polygon_viirs_c, file.path(OUT_PATH, paste0(grid_i,"_viirs_corrected",".Rds")))
       }
