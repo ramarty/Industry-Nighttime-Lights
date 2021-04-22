@@ -12,7 +12,7 @@ for(country in c("canada", "mexico")){
     list.files() %>%
     stri_subset_fixed("_clean.Rds", negate = TRUE)
   
-  for(dataset_i in datasets){
+  for(dataset_i in datasets %>% str_subset("hex_50")){
   
     print(paste(dataset_i, country, "--------------------------------"))
     
@@ -20,10 +20,7 @@ for(country in c("canada", "mexico")){
     MERGED_DATA_PATH <- file.path(data_file_path, "Grid", "FinalData", country, "merged_datasets")
     
     data <- readRDS(file.path(MERGED_DATA_PATH, dataset_i))
-    data$group   <- NULL
-    data$group.x <- NULL
-    data$group.y <- NULL
-    
+
     # Firms: If NA, then 0 -------------------------------------------------------
     firm_vars <- names(data)[grepl("firms|employment", names(data))]
     
@@ -98,6 +95,8 @@ for(country in c("canada", "mexico")){
       
       calc_diffi <- function(var, i) var - lag(var, i)
       
+      data <- data[,!(names(data) %in% "city_name")]
+      
       data_diffi <- data %>%
         dplyr::arrange(year) %>%
         dplyr::group_by(id) %>%
@@ -116,16 +115,19 @@ for(country in c("canada", "mexico")){
     data <- merge(data, data_diffs_df, by=merge_vars)
     
     #### Add other variables
+    dataset_i_clean <- dataset_i %>% str_replace_all(".Rds", "")
     data$time <- data$year %>% as.factor() %>% as.numeric()
-    data$unit <- dataset 
+    data$unit <- dataset_i_clean 
     
-    # Export ---------------------------------------------------------------------
+    # Cleanup Years ------------------------------------------------------------
+    ## Mexico
     if(country %in%  "mexico" & subset %in% "viirs"){
       data <- data %>%
         filter(!(year %in% c(2015, 2016)))
     }
     
-    saveRDS(data, file.path(MERGED_DATA_PATH, paste0(dataset, "_clean.Rds")))
+    # Export -------------------------------------------------------------------
+    saveRDS(data, file.path(MERGED_DATA_PATH, paste0(dataset_i_clean, "_clean.Rds")))
   }
 }
 #}

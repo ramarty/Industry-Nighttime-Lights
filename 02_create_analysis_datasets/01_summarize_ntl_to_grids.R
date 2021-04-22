@@ -1,11 +1,11 @@
 # Summarize data in polygons
 
-EXTRACT_DMSPOLS         <- T
-EXTRACT_DMSPOLSZHANG    <- T
-EXTRACT_DMSPOLSELVIDGE  <- T
+EXTRACT_DMSPOLS         <- F
+EXTRACT_DMSPOLSZHANG    <- F
+EXTRACT_DMSPOLSELVIDGE  <- F
 EXTRACT_DMSPOLSHARMON   <- T
 EXTRACT_VIIRS           <- T
-EXTRACT_VIIRS_CORRECTED <- T
+EXTRACT_VIIRS_CORRECTED <- F
 
 # LOOP OVER COUNTRY ------------------------------------------------------------
 for(country in c("canada", "mexico")){
@@ -41,7 +41,12 @@ for(country in c("canada", "mexico")){
       suffix_name <- ""
       polygon <- readRDS(file.path(data_file_path, "Grid", "RawData", paste0(grid_i, ".Rds")))
       
+      if(grepl("city", grid_i)) polygon <- gBuffer(polygon, width = 0, byid=T) # self intersections, for cities
+
       if(buffer_i != "none"){
+        if(country %in% "mexico") polygon <- polygon %>% spTransform(PROJ_mexico)
+        if(country %in% "canada") polygon <- polygon %>% spTransform(PROJ_canada)
+        
         if(grepl("city", grid_i)) suffix_name <- paste0("_splag", buffer_i)
         if(grepl("hex",  grid_i)) suffix_name <- paste0("_splag", "unit")
         
@@ -58,35 +63,35 @@ for(country in c("canada", "mexico")){
       print("dmspols zhang -----------------------------------------------------")
       if(EXTRACT_DMSPOLSZHANG){
         polygon_dmspols_z <- lapply(FIRM_YEARS[FIRM_YEARS <= 2014], extract_ntl, polygon, country, "dmspolszhang", suffix_name) %>% bind_rows()
-        saveRDS(polygon_dmspols_z, file.path(OUT_PATH, paste0(grid_i,"_dmspolszhang_",".Rds")))
+        saveRDS(polygon_dmspols_z, file.path(OUT_PATH, paste0(grid_i,"_dmspolszhang_buffer",buffer_i,".Rds")))
       }
       
       ## DMSPOLS - ELVIDGE
       print("dmspols elvidge ---------------------------------------------------")
       if(EXTRACT_DMSPOLSELVIDGE){
         polygon_dmspols_e <- lapply(FIRM_YEARS[FIRM_YEARS <= 2014], extract_ntl, polygon, country, "dmspolselvidge", suffix_name) %>% bind_rows()
-        saveRDS(polygon_dmspols_e, file.path(OUT_PATH, paste0(grid_i,"_dmspolselvidge_",".Rds")))
+        saveRDS(polygon_dmspols_e, file.path(OUT_PATH, paste0(grid_i,"_dmspolselvidge_buffer",buffer_i,".Rds")))
       }
       
       ## DMSPOLS - HARMON
       print("dmspols harmon ---------------------------------------------------")
       if(EXTRACT_DMSPOLSHARMON){
         polygon_dmspols_h <- lapply(FIRM_YEARS[FIRM_YEARS <= 2018], extract_ntl, polygon, country, "dmspolsharmon", suffix_name) %>% bind_rows()
-        saveRDS(polygon_dmspols_h, file.path(OUT_PATH, paste0(grid_i,"_dmspolsharmon_",".Rds")))
+        saveRDS(polygon_dmspols_h, file.path(OUT_PATH, paste0(grid_i,"_dmspolsharmon_buffer",buffer_i,".Rds")))
       }
       
       ## VIIRS
       print("viirs -------------------------------------------------------------")
       if(EXTRACT_VIIRS){
         polygon_viirs <- lapply(FIRM_YEARS[FIRM_YEARS >= 2011], extract_ntl, polygon, country, "viirs", suffix_name) %>% bind_rows()
-        saveRDS(polygon_viirs, file.path(OUT_PATH, paste0(grid_i,"_viirs",".Rds")))
+        saveRDS(polygon_viirs, file.path(OUT_PATH, paste0(grid_i,"_viirs_buffer",buffer_i,".Rds")))
       }
       
       ## VIIRS Corrected
       print("viirs corrected ---------------------------------------------------")
       if(EXTRACT_VIIRS_CORRECTED & (country %in% "mexico")){
         polygon_viirs_c <- lapply(FIRM_YEARS[FIRM_YEARS >= 2014], extract_ntl, polygon, country, "viirs_corrected", suffix_name) %>% bind_rows()
-        saveRDS(polygon_viirs_c, file.path(OUT_PATH, paste0(grid_i,"_viirs_corrected",".Rds")))
+        saveRDS(polygon_viirs_c, file.path(OUT_PATH, paste0(grid_i,"_viirs_corrected_buffer",buffer_i,".Rds")))
       }
       
     }

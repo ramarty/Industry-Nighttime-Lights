@@ -41,7 +41,7 @@ readRDS_exclude_type_vars <- function(filepath, year){
   return(df)
 }
 
-load_grid_data_no_type <- function(country, pattern, year, units = "all"){
+load_grid_data_no_type <- function(country, pattern, year = "all", units = "all"){
   
   grid <- list.files(file.path(project_file_path, "Data", 
                                "Grid",
@@ -55,13 +55,22 @@ load_grid_data_no_type <- function(country, pattern, year, units = "all"){
              str_replace_all("hex_", "") %>% 
              str_replace_all("_dmspols", "") %>%
              str_replace_all("_viirs", "") %>%
-             paste0(" Grid"))
+             paste0(" Grid")) %>%
+    mutate(unit = case_when(
+      unit %in% "city Grid" ~ "City",
+      unit %in% "citygriddmsp Grid" ~ "Grid in Cities [DMSP]",
+      unit %in% "citygridviirs Grid" ~ "Grid in Cities [VIIRS]",
+      TRUE ~ unit
+    ))
   
   # No 250, 500 or 1000km grid
   grid <- grid[!(grid$unit %in% c("250km Grid", "500km Grid", "1000km Grid")),]
   
-  grid$unit <- grid$unit %>% factor(levels = c("5km", "10km", "25km", "50km", "100km") %>%
-                                      paste0(" Grid"))
+  # Cities/Year Adjust
+  
+  grid$unit <- grid$unit %>% factor(levels = c("5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid",
+                                               "Grid in Cities [DMSP]",
+                                               "Grid in Cities [VIIRS]"))
   
   if(units != "all") grid <- grid[grid$unit %in% units,]
   
@@ -195,7 +204,7 @@ extract_firm_stats <- function(polygon, firms_i){
     group_by(poly_id) %>%
     summarise_if(is.numeric, sum, na.rm=T) %>%
     dplyr::mutate(naics2 = "all")
-
+  
   df_sum_type <- firms_i@data %>%
     group_by(poly_id, naics2) %>%
     summarise_if(is.numeric, sum, na.rm=T)
@@ -208,7 +217,7 @@ extract_firm_stats <- function(polygon, firms_i){
   df_mean <- df_mean %>% rename_at(vars(-poly_id, -naics2), ~ paste0(., '_mean'))
   
   df_merged <- merge(df_sum, df_mean, by = c("poly_id", "naics2"), all = T)
-
+  
   df_merged <- df_merged[!is.na(df_merged$naics2),]
   
   return(df_merged)
@@ -255,7 +264,7 @@ extract_ntl <- function(year, polygon, country, ntl_type, suffix = ""){
     #   ntl_r <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED", 
     #                             paste0("Harmonized_DN_NTL_",year_ntl,"_calDMSP_",country_iso,".tif")))
     # } 
-
+    
   }
   
   if(ntl_type %in% "dmspolszhang"){
@@ -374,8 +383,9 @@ remove_center_polygon <- function(polygon, polygon_buff){
   # of polygon. Removes the 'polygon' area from 'polygon_buff'
   
   lapply(1:nrow(polygon), function(i){
+    print(i)
     if((i %% 100) %in% 0) print(paste0(i, " Erase Center"))
-    
+  
     raster::erase(polygon_buff[i,], polygon[i,])
   }) %>% 
     do.call(what = "rbind")
@@ -383,8 +393,8 @@ remove_center_polygon <- function(polygon, polygon_buff){
 }
 
 buffer_rm_center <- function(polygon,
-                                 width,
-                                 chunk_size = 1000){
+                             width,
+                             chunk_size = 1000){
   # Buffers polygon and removes original area
   
   polygon_buff <- gBuffer_chunks(polygon, width = width, chunk_size = chunk_size)
