@@ -155,7 +155,7 @@ for(country_name in c("canada", "mexico")){
   
   ggsave(p_all, 
          filename = file.path(figures_file_path, paste0("within_city_maps_cor_", country_name, ".png")),
-         height = 14, 
+         height = 12, 
          width = 12)
   
 }

@@ -5,7 +5,7 @@ EXTRACT_DMSPOLSZHANG    <- F
 EXTRACT_DMSPOLSELVIDGE  <- F
 EXTRACT_DMSPOLSHARMON   <- T
 EXTRACT_VIIRS           <- T
-EXTRACT_VIIRS_CORRECTED <- F
+EXTRACT_VIIRS_CORRECTED <- T
 
 # LOOP OVER COUNTRY ------------------------------------------------------------
 for(country in c("canada", "mexico")){

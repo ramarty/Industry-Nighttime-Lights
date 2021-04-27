@@ -1,18 +1,19 @@
 # Merge Polygon Datasets
 
-country <- "mexico"
-dataset <- "hex_50km"
-subset <- "viirs"
-
 print("03 CLEAN DATASETS")
 
 for(country in c("canada", "mexico")){
   
   datasets <- file.path(data_file_path, "Grid", "FinalData", country, "merged_datasets") %>%
-    list.files() %>%
+    list.files(pattern = "*.Rds") %>%
     stri_subset_fixed("_clean.Rds", negate = TRUE)
   
-  for(dataset_i in datasets %>% str_subset("hex_50")){
+  if(country %in% "mexico"){
+    datasets <- datasets %>%
+      str_subset("_dmspols.Rds|_viirs.Rds")
+  }
+  
+  for(dataset_i in datasets){
   
     print(paste(dataset_i, country, "--------------------------------"))
     
@@ -78,17 +79,17 @@ for(country in c("canada", "mexico")){
     # Complete ---------------------------------------------------------------
     # Need to complete year-id combination for Mexico with viirs subset
     # as irregular time period
-    if(country %in%  "mexico" & subset %in% "viirs"){
+    if(country %in%  "mexico" & grepl("_viirs.Rds", dataset_i)){
       data <- data %>%
-        complete(year = 2014:2020, id)
+        tidyr::complete(year = 2014:2020, id)
     }
     
     # Variable Differences ---------------------------------------------------
     merge_vars <- c("id", "year")
     
     if(country %in% "canada") MAX_DIFF <- 6
-    if(country %in% "mexico" & subset %in% "dmspols") MAX_DIFF <- 2
-    if(country %in% "mexico" & subset %in% "viirs")   MAX_DIFF <- 6
+    if(country %in% "mexico" & grepl("dmspols", dataset_i)) MAX_DIFF <- 2
+    if(country %in% "mexico" & grepl("viirs", dataset_i))   MAX_DIFF <- 6
     
     data_diffs_list <- lapply(1:MAX_DIFF, function(i){
       print(i)
@@ -121,7 +122,7 @@ for(country in c("canada", "mexico")){
     
     # Cleanup Years ------------------------------------------------------------
     ## Mexico
-    if(country %in%  "mexico" & subset %in% "viirs"){
+    if(country %in%  "mexico" & grepl("viirs", dataset_i)){
       data <- data %>%
         filter(!(year %in% c(2015, 2016)))
     }

@@ -125,6 +125,13 @@ if(RUN_SCRIPTS){
   ## Rasterize grid polygons
   source(file.path(clean_indiv_code_dir, "Grids", "02_rasterize.R"))
   
+  # 1.4 City Data --------------------------------------------------------------
+  # Clean/standardize city-level datasets
+  
+  source(file.path(clean_indiv_code_dir, "Cities in Canada", "01_clean_can_cities.R"))
+  source(file.path(clean_indiv_code_dir, "Cities in Mexico", "01_clean_mex_cities.R"))
+  
+  
   # 2. CREATE ANALYSIS DATASETS ================================================
   # Extracts firm employment and nighttime light values to polygons. Creates
   # a dataset at the polygon-year level with these variables
@@ -137,12 +144,15 @@ if(RUN_SCRIPTS){
   # Extract nighttime lights data to grids
   source(file.path(create_anlys_dta_code, "01_summarize_ntl_to_grids.R"))
   
+  # Compute spatial lag of firm data
+  source(file.path(create_anlys_dta_code, "02_firm_spatial_lag.R"))
+  
   # Merge firm and nighttime lights data together
-  source(file.path(create_anlys_dta_code, "02_merge_datasets.R"))
+  source(file.path(create_anlys_dta_code, "03_merge_datasets.R"))
   
   # Clean datasets Includes constructing variables, including logging variables
   # and constructing first differences. This code takes about 4 hours to run.
-  source(file.path(create_anlys_dta_code, "Grids", "03_clean_datasets.R"))
+  source(file.path(create_anlys_dta_code, "Grids", "04_clean_datasets.R"))
   
   # 3. ANALYSIS ================================================================
   analysis_code <- file.path(github_file_path, "03_analysis")

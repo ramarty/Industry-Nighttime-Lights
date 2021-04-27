@@ -46,9 +46,9 @@ for(country in c("canada", "mexico")){
     data_merged <- Reduce(function(x, y) merge(x, y, by = c("id", "year"), all=TRUE), data_files)
 
     # Cleanup vars
-    data_merged$group   <- NULL
-    data_merged$group.y <- NULL
-    data_merged$group.x <- NULL
+    for(i in 1:10) data_merged$group   <- NULL
+    for(i in 1:10) data_merged$group.y <- NULL
+    for(i in 1:10) data_merged$group.x <- NULL
     
     # Add city info
     if(grepl("city", dataset_type)){
