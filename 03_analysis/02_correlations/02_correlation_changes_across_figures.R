@@ -14,12 +14,8 @@ df_out_all <- df_out_all %>%
   filter(difference != "level",
          transform %in% c("log", "level"),
          ntl_var %in% c("dmspolsharmon_mean", "viirs_mean"),
-         !(year %in% "All"),
-         unit %in% c("5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid")) %>%
+         !(year %in% "All")) %>%
   mutate(year = year %>% as.character() %>% as.numeric() %>% as.factor(),
-         unit = unit %>% 
-           str_replace_all(" Grid", "") %>%
-           factor(levels = c("5km", "10km", "25km", "50km", "100km")),
          ntl_var = case_when(ntl_var %in% "dmspolsharmon_mean" ~ "DMSP-OLS",
                              ntl_var %in% "viirs_mean"        ~ "VIIRS"))
 

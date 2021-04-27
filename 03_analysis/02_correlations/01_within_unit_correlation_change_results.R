@@ -1,14 +1,14 @@
 # Analysis
 
 # Load/Prep Data ---------------------------------------------------------------
-mex_dmspols <- load_grid_data_no_type("mexico", "*_dmspols_clean.Rds", "all")
-mex_viirs   <- load_grid_data_no_type("mexico", "*_viirs_clean.Rds",   "all")
-can         <- load_grid_data_no_type("canada", "*_clean.Rds",         "all")
+mex_dmspols <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData", 
+                                 "mexico", "merged_appended_allunits", "mex_dmspols_notype.Rds")) 
 
-# Only use DMSP-Harmon data in the time frame
-#can$dmspolsharmon_mean[can$year > 2013] <- NA
-#mex_viirs$dmspolsharmon_mean[mex_viirs$year > 2013] <- NA
-#mex_dmspols$dmspolsharmon_mean[mex_dmspols$year > 2013] <- NA
+mex_viirs <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData", 
+                               "mexico", "merged_appended_allunits", "mex_viirs_notype.Rds")) 
+
+can <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData",
+                         "canada", "merged_appended_allunits", "can_notype.Rds")) 
 
 # Correlation ------------------------------------------------------------------
 country <- "Canada"
@@ -20,7 +20,7 @@ transform <- "log"
 
 df_out_all <- data.frame(NULL)
 for(country in c("Canada", "Mexico")){
-  for(ntl_var in c("dmspols_mean", "dmspolsharmon_mean", "viirs_mean")){
+  for(ntl_var in c("dmspolsharmon_mean", "viirs_mean")){
     
     ## Grab dataset
     if(country %in% "Canada")                             df <- can
@@ -34,7 +34,7 @@ for(country in c("Canada", "Mexico")){
       for(firm_var in c("employment_sum_all", "firms_sum_all",
                         "empl_med_sum_all", "N_firms_sum_all")){
         for(transform in c("level", "log")){
-          print(paste(year, country, unit, transform, ntl_var, firm_var, sep = " - "))
+          print(paste(country, unit, transform, ntl_var, firm_var, sep = " - "))
           
           ## Define base data and variables
           df_temp    <- df

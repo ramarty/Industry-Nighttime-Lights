@@ -6,7 +6,7 @@
 # unit for DMSP-OLS and VIIRS (different original grid size). For Canada, for
 # city-grid-dmsp, we make all VIIRS variables NA (and vice versa for VIIRS). For
 # Mexico, we have separate datasets for DMSP and VIIRS, and we just remove the
-# relevant unit.
+# relevant unit. In addition, defines correct spatial lag variable
 
 # Function for Loading Merged Data ---------------------------------------------
 append_data_no_type <- function(country, pattern){
@@ -38,8 +38,44 @@ append_data_no_type <- function(country, pattern){
   return(grid)
 }
 
+clean_slag <- function(df){
+  # Create standardized variable for spatial lag
+  
+  df_clean <- lapply(unique(df$unit), function(unit_i){
+    
+    print(unit_i)
+    df_i <- df[df$unit %in% unit_i,]
+    
+    if(grepl("km Grid", unit_i)){
+
+      rm_var <- names(df_i) %>% str_subset("splag[:digit:]km|splag[:digit:][:digit:]km|splag[:digit:][:digit:][:digit:]km") 
+      for(var in rm_var) df_i[[var]] <- NULL
+      
+    } else{
+    
+      if(unit_i %in% "City")                   lag_name <- "splag10km" # "1km", "2km", "5km", "10km"
+      if(unit_i %in% "Grid in Cities [VIIRS]") lag_name <- "splag10km" # "1km", "2km", "5km", "10km"
+      if(unit_i %in% "Grid in Cities [DMSP]")  lag_name <- "splag10km" # "1km", "2km", "5km", "10km"
+      if(unit_i %in% "Grid in Cities")         lag_name <- "splag10km" # "1km", "2km", "5km", "10km"
+      
+      rm_unit_var <- names(df_i) %>% str_subset("splagunit") 
+      for(var in rm_unit_var) df_i[[var]] <- NULL
+      
+      names(df_i) <- names(df_i) %>% str_replace_all(lag_name, "splagunit")
+      
+      rm_km_var <- names(df_i) %>% str_subset("splag[:digit:]km|splag[:digit:][:digit:]km|splag[:digit:][:digit:][:digit:]km") 
+      for(var in rm_km_var) df_i[[var]] <- NULL
+    }
+    
+    return(df_i)
+  }) %>%
+    bind_rows()
+  
+  return(df_clean)
+}
+
 # Canada -----------------------------------------------------------------------
-can <- append_data_no_type("canada", "*_clean.Rds")
+can <- append_data_no_type("canada", "*_clean.Rds") %>% clean_slag()
 
 dmsp_vars  <- can %>% names %>% str_subset("dmsp")
 viirs_vars <- can %>% names %>% str_subset("viirs")
@@ -61,7 +97,7 @@ saveRDS(can, file.path(project_file_path, "Data",
                        "can_notype.Rds"))
 
 # Mexico: DMSP -----------------------------------------------------------------
-mex_dmspols <- append_data_no_type("mexico", "*_dmspols_clean.Rds")
+mex_dmspols <- append_data_no_type("mexico", "*_dmspols_clean.Rds") %>% clean_slag()
 
 mex_dmspols <- mex_dmspols %>% dplyr::filter(unit != "Grid in Cities [VIIRS]")
 
@@ -79,21 +115,21 @@ saveRDS(mex_dmspols, file.path(project_file_path, "Data",
                                "mex_dmspols_notype.Rds"))
 
 # Mexico: VIIRS ----------------------------------------------------------------
-mex_viirs <- append_data_no_type("mexico", "*_viirs_clean.Rds")
+mex_viirs <- append_data_no_type("mexico", "*_viirs_clean.Rds") %>% clean_slag()
 
 mex_viirs <- mex_viirs %>% dplyr::filter(unit != "Grid in Cities [DMSP]")
 
 mex_viirs$unit[mex_viirs$unit %in% c("Grid in Cities [VIIRS]", "Grid in Cities [DMSP]")] <- "Grid in Cities"
 
 mex_viirs$unit <- mex_viirs$unit %>% factor(levels = c("5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid",
-                                                           "City",
-                                                           "Grid in Cities"))
+                                                       "City",
+                                                       "Grid in Cities"))
 
 saveRDS(mex_viirs, file.path(project_file_path, "Data", 
-                               "Grid",
-                               "FinalData",
-                               "mexico",
-                               "merged_appended_allunits",
-                               "mex_viirs_notype.Rds"))
+                             "Grid",
+                             "FinalData",
+                             "mexico",
+                             "merged_appended_allunits",
+                             "mex_viirs_notype.Rds"))
 
 

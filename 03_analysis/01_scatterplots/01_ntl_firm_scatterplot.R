@@ -1,9 +1,17 @@
 # Analysis
 
 # Load/Prep Data ---------------------------------------------------------------
-mex_dmspols <- load_grid_data_no_type("mexico", "*_dmspols_clean.Rds", 2009)
-mex_viirs   <- load_grid_data_no_type("mexico", "*_viirs_clean.Rds",   2019)
-can         <- load_grid_data_no_type("canada", "*_clean.Rds",         2013)
+mex_dmspols <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData", 
+                                 "mexico", "merged_appended_allunits", "mex_dmspols_notype.Rds")) %>%
+  dplyr::filter(year %in% 2009)
+
+mex_viirs <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData", 
+                               "mexico", "merged_appended_allunits", "mex_viirs_notype.Rds")) %>%
+  dplyr::filter(year %in% 2019)
+
+can <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData",
+                       "canada", "merged_appended_allunits", "can_notype.Rds")) %>%
+  dplyr::filter(year %in% 2013)
 
 # Figures: Function ------------------------------------------------------------
 make_figure <- function(df, x_var, y_var, x_var_title, y_var_title, title){
@@ -15,7 +23,8 @@ make_figure <- function(df, x_var, y_var, x_var_title, y_var_title, title){
     filter(y_var > 0) %>%
     ggplot(aes(x = x_var, 
                y = y_var)) +
-    geom_point(size=.1) +
+    geom_point(size=.1,
+               alpha = 0.2) +
     labs(x=x_var_title,
          y=y_var_title,
          title = title) +

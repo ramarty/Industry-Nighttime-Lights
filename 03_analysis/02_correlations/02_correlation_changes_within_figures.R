@@ -15,13 +15,14 @@ cor_within <- readRDS(file.path(data_file_path, "Results", "correlation_within_u
 cor_within <- cor_within %>%
   dplyr::filter(!is.na(cor),
                 #transform == "log",
-                unit %in% c("5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid"),
+                #unit %in% c("5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid"),
                 ntl_var %in% c("dmspolsharmon_mean", "viirs_mean")) %>%
   dplyr::mutate(ntl_var = case_when(ntl_var %in% "dmspolsharmon_mean" ~ "DMSP-OLS",
-                                    ntl_var %in% "viirs_mean"        ~ "VIIRS"),
-                unit = unit %>% 
-                  str_replace_all(" Grid", "") %>%
-                  factor(levels = rev(c("5km", "10km", "25km", "50km", "100km"))))
+                                    ntl_var %in% "viirs_mean"        ~ "VIIRS"))
+
+# unit = unit %>% 
+#   str_replace_all(" Grid", "") %>%
+#   factor(levels = rev(c("5km", "10km", "25km", "50km", "100km")))
 
 # Function to Make Figure ------------------------------------------------------
 make_figure <- function(country_name, ntl_var_name, firm_var_name){

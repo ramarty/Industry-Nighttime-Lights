@@ -8,7 +8,7 @@ df_out_all <- readRDS(file.path(data_file_path, "Results", "polygon_correlation_
 
 ## Rename
 df_out_all$ntl_var <- df_out_all$ntl_var %>% as.character()
-df_out_all$ntl_var[df_out_all$ntl_var %in% "dmspols_mean"] <- "DMSP-OLS"
+df_out_all$ntl_var[df_out_all$ntl_var %in% "dmspolsharmon_mean"] <- "DMSP-OLS"
 df_out_all$ntl_var[df_out_all$ntl_var %in% "viirs_mean"] <- "VIIRS"
 
 df_out_all$transform <- df_out_all$transform %>% as.character()
@@ -19,12 +19,11 @@ df_out_all <- df_out_all %>%
   filter(difference %in% "level",
          ntl_var %in% c("DMSP-OLS", "VIIRS"),
          transform %in% c("Levels"),
-         !(year %in% "All"),
-         unit %in% c("5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid")) %>%
-  mutate(year = year %>% as.character() %>% as.numeric() %>% as.factor()) %>%
-  mutate(unit = unit %>% 
-           str_replace_all(" Grid", "") %>%
-           factor(levels = c("5km", "10km", "25km", "50km", "100km")))
+         !(year %in% "All")) %>%
+  mutate(year = year %>% as.character() %>% as.numeric() %>% as.factor()) #%>%
+  #mutate(unit = unit %>% 
+  #         str_replace_all(" Grid", "") %>%
+  #         factor(levels = c("5km", "10km", "25km", "50km", "100km")))
 
 df_out_all$firm_var[df_out_all$firm_var %in% "empl_med_sum_all" & 
                       df_out_all$year %in% c(2017, 2018, 2020) &

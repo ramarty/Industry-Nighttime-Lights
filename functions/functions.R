@@ -21,6 +21,10 @@ extract_coefs <- function(model){
                   "ci2_5" = "2.5 %",
                   "ci97_5" = "97.5 %")
   
+  df_all$P.adj.r.squared <- summary(model)$P.adj.r.squared
+  df_all$adj.r.squared   <- summary(model)$adj.r.squared
+  df_all$r2adj           <- summary(model)$r2adj
+  
   return(df_all)
 }
 

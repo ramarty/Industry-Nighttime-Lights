@@ -82,7 +82,8 @@ for(country in c("canada", "mexico")){
       saveRDS(df_splag,
               file.path(data_file_path, "Grid", "FinalData", country, 
                         "individual_datasets",
-                        grid_i %>% str_replace_all("firms.Rds", "firms_splag.Rds")))
+                        grid_i %>% str_replace_all("firms.Rds", 
+                                                   paste0("firms_splag_",buffer_i,".Rds"))))
       
       
     }
