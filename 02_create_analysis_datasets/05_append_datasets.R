@@ -53,10 +53,10 @@ clean_slag <- function(df){
       
     } else{
     
-      if(unit_i %in% "City")                   lag_name <- "splag10km" # "1km", "2km", "5km", "10km"
-      if(unit_i %in% "Grid in Cities [VIIRS]") lag_name <- "splag10km" # "1km", "2km", "5km", "10km"
-      if(unit_i %in% "Grid in Cities [DMSP]")  lag_name <- "splag10km" # "1km", "2km", "5km", "10km"
-      if(unit_i %in% "Grid in Cities")         lag_name <- "splag10km" # "1km", "2km", "5km", "10km"
+      if(unit_i %in% "City")                   lag_name <- "splag5km" # "1km", "2km", "5km", "10km"
+      if(unit_i %in% "Grid in Cities [VIIRS]") lag_name <- "splag1km" # "1km", "2km", "5km", "10km"
+      if(unit_i %in% "Grid in Cities [DMSP]")  lag_name <- "splag1km" # "1km", "2km", "5km", "10km"
+      if(unit_i %in% "Grid in Cities")         lag_name <- "splag1km" # "1km", "2km", "5km", "10km"
       
       rm_unit_var <- names(df_i) %>% str_subset("splagunit") 
       for(var in rm_unit_var) df_i[[var]] <- NULL

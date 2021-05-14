@@ -19,6 +19,10 @@ for(country in c("canada", "mexico")){
     
     ## Load Coordinates
     sp_coords <- readRDS(file.path(data_file_path, "Grid", "RawData", grid_i %>% str_replace_all("_firms", ""))) 
+    
+    if(grepl("city", grid_i) & country == "canada") sp_coords <- sp_coords %>% spTransform(PROJ_canada)
+    if(grepl("city", grid_i) & country == "mexico") sp_coords <- sp_coords %>% spTransform(PROJ_mexico)
+    
     df_coords <- coordinates(sp_coords) %>%
       as.data.frame()
     names(df_coords) <- c("lon", "lat")
@@ -56,13 +60,13 @@ for(country in c("canada", "mexico")){
       ## Buffer values
       print(paste("TOTAL IDS:", length(unique(df$id))))
       df_splag <- map_df(unique(df$id), function(id_i){
-        if((id_i %% 100) %in% 0) print(id_i)
+        if((id_i %% 100) %in% 0) print(paste(id_i, "/", length(unique(df$id))))
         
         # contains multiple years, so keep/remove this way
         df_i    <- df[df$id %in% id_i,]
         df_noti <- df[!(df$id %in% id_i),] 
         
-        dist <- sqrt((df_i$lat - df_noti$lat)^2 + (df_i$lon - df_noti$lon)^2)
+        dist <- sqrt((df_i$lat[1] - df_noti$lat)^2 + (df_i$lon[1] - df_noti$lon)^2)
         df_noti_col <- suppressMessages(
           df_noti[dist < buffer_i_value*1000,] %>%
             dplyr::select(year, 
@@ -79,6 +83,7 @@ for(country in c("canada", "mexico")){
       })
       
       ## Export 
+      print(head(df_splag))
       saveRDS(df_splag,
               file.path(data_file_path, "Grid", "FinalData", country, 
                         "individual_datasets",

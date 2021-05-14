@@ -46,7 +46,7 @@ city_to_grid_i <- function(i, city_sp, r){
   r_in_city$city_name <- city_sp_i$city_name
   
   print(nrow(r_in_city))
-  if(nrow(r_in_city) %in% 0) Sys.sleep(300000)
+  if(nrow(r_in_city) %in% 0) Sys.sleep(1)
   
   return(r_in_city)
 }
