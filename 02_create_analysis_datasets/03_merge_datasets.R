@@ -65,19 +65,28 @@ for(country in c("canada", "mexico")){
     
     # Cleanup vars
     # TODO: prevent this issue
-    for(i in 1:10) data_merged$group   <- NULL
-    for(i in 1:10) data_merged$group.y <- NULL
-    for(i in 1:10) data_merged$group.x <- NULL
+    #for(i in 1:10) data_merged$group   <- NULL
+    #for(i in 1:10) data_merged$group.y <- NULL
+    #for(i in 1:10) data_merged$group.x <- NULL
     
     # For citydmsp/viirs, subset by years
     #if(dataset_type %in% "citygridviirs") data_merged <- data_merged[data_merged$year >= 2012,]
     #if(dataset_type %in% "citygriddmsp")  data_merged <- data_merged[data_merged$year <= 2013,]
     
+    ## Subset
+    # Only keep cells that had a firm at some point
+    data_merged <- data_merged %>%
+      dplyr::group_by(id) %>%
+      dplyr::mutate(firms_positive_anyyear   = max(N_firms_sum_all, na.rm=T) > 0) %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(firms_positive_anyyear %in% T)
+    
     ## Export
     saveRDS(data_merged, file.path(MERGED_DATA_PATH, paste0(dataset_type, ".Rds")))
     
     # If Mexico, save as two separate files: DMSPOLS period and VIIRS period. Do 
-    # this because years between data is different in two time periods.
+    # this because years between data is different in two time periods (so affects
+    # differencing)
     if(country %in% "mexico"){
       data_merged_dmspols <- data_merged[data_merged$year <= 2014,]
       data_merged_viirs   <- data_merged[data_merged$year >= 2014,]
@@ -86,7 +95,6 @@ for(country in c("canada", "mexico")){
       saveRDS(data_merged_viirs,   file.path(MERGED_DATA_PATH, paste0(dataset_type, "_viirs.Rds")))
     }
     
-
     
   }
 }

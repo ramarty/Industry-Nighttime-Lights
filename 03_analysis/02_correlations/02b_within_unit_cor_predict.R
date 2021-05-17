@@ -58,6 +58,8 @@ lm_coefs <- lm_coefs %>%
 
 lm_coefs <- lm_coefs[!(lm_coefs$country == "Canada" & lm_coefs$ntl_var == "VIIRS"),]
 
+lm_coefs <- lm_coefs[lm_coefs$unit != "100km Grid",]
+
 # Visualize --------------------------------------------------------------------
 make_figure <- function(country_i,
                         firmvar_i){
@@ -95,7 +97,7 @@ make_figure <- function(country_i,
          x = "Coef (+/- 95% CI)",
          y = NULL,
          title = firmvar_clean) +
-    scale_color_manual(values = c("dodgerblue3", "darkorange2")) +
+    #scale_color_manual(values = c("dodgerblue3", "darkorange2")) +
     theme(plot.title = element_text(hjust = 0.5)) +
     facet_wrap(~ntl_var)
   
@@ -125,9 +127,13 @@ p <- ggarrange(can,
                mex,
                nrow = 2)
 
-ggsave(p, filename = file.path(figures_file_path, "predict_within_cor_reg.png"),
+ggsave(p, filename = file.path("~/Desktop", "predict_within_cor_reg.png"),
        height = 10, 
        width = 12)
+
+# ggsave(p, filename = file.path(figures_file_path, "predict_within_cor_reg.png"),
+#        height = 10, 
+#        width = 12)
 
 # Other Figure -----------------------------------------------------------------
 cor_df %>%
@@ -137,7 +143,8 @@ cor_df %>%
          ntl_var == "viirs_mean") %>%
   ggplot(aes(x = firm_var_change,
              y = cor)) +
-  geom_point()+
+  geom_point(alpha = 0.4,
+             size = 0.8)+
   labs(x = "Firm Growth Rate",
        y = "Correlation",
        title = "Firm Growth Rate within Units vs. Within Unit\nCorrelation Between N Firms and VIIRS\n(Mexico, 5km Grid)") +

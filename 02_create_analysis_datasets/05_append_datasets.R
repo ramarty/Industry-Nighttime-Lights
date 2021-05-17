@@ -16,7 +16,7 @@ append_data_no_type <- function(country, pattern){
                                "Grid",
                                "FinalData",
                                country,
-                               "merged_datasets"), pattern = pattern, full.names = T) %>%
+                               "merged_clean_datasets"), pattern = pattern, full.names = T) %>%
     lapply(readRDS_exclude_type_vars, year="all") %>%
     bind_rows() %>%
     filter(!is.na(unit)) %>%
@@ -93,7 +93,7 @@ saveRDS(can, file.path(project_file_path, "Data",
                        "Grid",
                        "FinalData",
                        "canada",
-                       "merged_appended_allunits",
+                       "merged_clean_appended_allunits",
                        "can_notype.Rds"))
 
 # Mexico: DMSP -----------------------------------------------------------------
@@ -111,7 +111,7 @@ saveRDS(mex_dmspols, file.path(project_file_path, "Data",
                                "Grid",
                                "FinalData",
                                "mexico",
-                               "merged_appended_allunits",
+                               "merged_clean_appended_allunits",
                                "mex_dmspols_notype.Rds"))
 
 # Mexico: VIIRS ----------------------------------------------------------------
@@ -129,7 +129,7 @@ saveRDS(mex_viirs, file.path(project_file_path, "Data",
                              "Grid",
                              "FinalData",
                              "mexico",
-                             "merged_appended_allunits",
+                             "merged_clean_appended_allunits",
                              "mex_viirs_notype.Rds"))
 
 

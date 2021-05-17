@@ -8,8 +8,8 @@ df_out_all <- readRDS(file.path(data_file_path, "Results", "polygon_correlation_
 
 ## Rename
 df_out_all$ntl_var <- df_out_all$ntl_var %>% as.character()
-df_out_all$ntl_var[df_out_all$ntl_var %in% "dmspolsharmon_mean"] <- "DMSP-OLS"
-df_out_all$ntl_var[df_out_all$ntl_var %in% "viirs_mean"] <- "VIIRS"
+df_out_all$ntl_var[df_out_all$ntl_var %in% "dmspolsharmon_sum"] <- "DMSP-OLS"
+df_out_all$ntl_var[df_out_all$ntl_var %in% "viirs_sum"] <- "VIIRS"
 
 df_out_all$transform <- df_out_all$transform %>% as.character()
 df_out_all$transform[df_out_all$transform %in% "level"] <- "Levels"
@@ -18,19 +18,19 @@ df_out_all$transform[df_out_all$transform %in% "level"] <- "Levels"
 df_out_all <- df_out_all %>%
   filter(difference %in% "level",
          ntl_var %in% c("DMSP-OLS", "VIIRS"),
-         transform %in% c("Levels"),
+         transform %in% c("log"), # Levels, log
          !(year %in% "All")) %>%
-  mutate(year = year %>% as.character() %>% as.numeric() %>% as.factor()) #%>%
-  #mutate(unit = unit %>% 
-  #         str_replace_all(" Grid", "") %>%
-  #         factor(levels = c("5km", "10km", "25km", "50km", "100km")))
-
-df_out_all$firm_var[df_out_all$firm_var %in% "empl_med_sum_all" & 
-                      df_out_all$year %in% c(2017, 2018, 2020) &
-                      country %in% "Mexico"] <- "employment_sum_all"
+  mutate(year = year %>% as.character() %>% as.numeric() %>% as.factor()) %>%
+  mutate(unit = unit %>% factor(levels = c("City",
+                                           "Grid in Cities",
+                                           "5km Grid",
+                                           "10km Grid",
+                                           "25km Grid",
+                                           "50km Grid",
+                                           "100km Grid")))
 
 df_out_all <- df_out_all %>%
-  dplyr::filter(firm_var %in% c("N_firms_sum_all", "employment_sum_all")) %>%
+  dplyr::filter(!(firm_var == "employment_sum_all" & country == "Mexico")) %>%
   dplyr::mutate(firm_var =
                   case_when(firm_var %in% "N_firms_sum_all" ~ "N Firms",
                             firm_var %in% "employment_sum_all" ~ "Employment"))
@@ -39,14 +39,11 @@ df_out_all <- df_out_all %>%
 make_figure <- function(country, df_out_all){
   
   df_out_all <- df_out_all[df_out_all$country %in% country,]
-  #df_out_all <- df_out_all[df_out_all$firm_var %in% firm_var_i,]
   
   df_out_all <- df_out_all %>%
     filter(!is.na(b)) 
   N_colors <- df_out_all$year %>% unique() %>% length()
   
-  #if(firm_var_i %in% "firms_sum_all")      title <- "Number of Firms"
-  #if(firm_var_i %in% "employment_sum_all") title <- "Total Employment"
   title <- country
   
   df_out_all %>%
@@ -88,11 +85,5 @@ p <- ggarrange(p_mex,
                p_can) 
 ggsave(p, filename = file.path(figures_file_path, "levels_cor.png"), height = 5, width=15)
 
-
-# p_employ <- ggarrange(p_mex,
-#                       p_can) %>%
-#   annotate_figure(top = text_grob("Correlation with Nighttime Lights and Total Employment", 
-#                                   color = "black", face = "bold", size = 14))
-# ggsave(p_employ, filename = file.path(figures_file_path, "levels_cor_employment.png"), height = 5, width=15)
 
 

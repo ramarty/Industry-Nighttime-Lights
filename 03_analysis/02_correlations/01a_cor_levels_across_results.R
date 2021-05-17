@@ -2,13 +2,23 @@
 
 # Load/Prep Data ---------------------------------------------------------------
 mex_dmspols <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData", 
-                                 "mexico", "merged_appended_allunits", "mex_dmspols_notype.Rds")) 
+                                 "mexico", "merged_clean_appended_allunits", "mex_dmspols_notype.Rds")) 
 
 mex_viirs <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData", 
-                               "mexico", "merged_appended_allunits", "mex_viirs_notype.Rds")) 
+                               "mexico", "merged_clean_appended_allunits", "mex_viirs_notype.Rds")) 
 
 can <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData",
-                         "canada", "merged_appended_allunits", "can_notype.Rds")) 
+                         "canada", "merged_clean_appended_allunits", "can_notype.Rds")) 
+
+
+mex_dmspols <- mex_dmspols[mex_dmspols$year %in% 2014,]
+mex_viirs <- mex_viirs[mex_viirs$year %in% 2014,]
+
+mex_dmspols <- mex_dmspols[mex_dmspols$unit %in% "25km Grid",]
+mex_viirs <- mex_viirs[mex_viirs$unit %in% "25km Grid",]
+
+mex_dmspols <- mex_dmspols[mex_dmspols$N_firms_sum_all > 0,]
+mex_viirs <- mex_viirs[mex_viirs$N_firms_sum_all > 0,]
 
 # Correlation ------------------------------------------------------------------
 country <- "Canada"
@@ -20,7 +30,7 @@ difference <- "level"
 
 df_out_all <- data.frame(NULL)
 for(country in c("Canada", "Mexico")){
-  for(ntl_var in c("dmspolsharmon_mean", "viirs_mean")){
+  for(ntl_var in c("dmspolsharmon_sum", "viirs_sum")){
     
     ## Grab dataset
     if(country %in% "Canada")                             df <- can
@@ -40,7 +50,7 @@ for(country in c("Canada", "Mexico")){
     
     for(year in c(YEARS, "All")){
       for(unit in UNITS){
-        for(firm_var in c("employment_sum_all", "empl_med_sum_all", "N_firms_sum_all")){
+        for(firm_var in c("employment_sum_all", "N_firms_sum_all")){
           for(transform in c("level", "log")){
             for(difference in c("level", paste0("diff",1:MAX_DIFF))){
               print(paste(year, country, unit, difference, transform, ntl_var, firm_var, sep = " - "))
@@ -76,7 +86,7 @@ for(country in c("Canada", "Mexico")){
               # use non-diff variable later
               # in subsetting
               df_temp$firm_var_nodiff <- df_temp[[firm_var_i]] 
-
+              
               if(difference != "level"){
                 ntl_var_i  <- paste0(ntl_var_i, "_", difference)
                 firm_var_i <- paste0(firm_var_i, "_", difference)
@@ -103,7 +113,7 @@ for(country in c("Canada", "Mexico")){
               
               ## Correlation
               if(nrow(df_temp) > 1){
-
+                
                 cor_out <- cor.test(df_temp$ntl_var, df_temp$firm_var)
                 
                 ci <- cor_out$conf.int %>% as.numeric()

@@ -14,14 +14,15 @@ for(country in c("canada", "mexico")){
   }
   
   for(dataset_i in datasets){
-  
+    
     print(paste(dataset_i, country, "--------------------------------"))
     
     # Load Data ------------------------------------------------------------------
     MERGED_DATA_PATH <- file.path(data_file_path, "Grid", "FinalData", country, "merged_datasets")
+    MERGED_CLEAN_DATA_PATH <- file.path(data_file_path, "Grid", "FinalData", country, "merged_clean_datasets")
     
     data <- readRDS(file.path(MERGED_DATA_PATH, dataset_i))
-
+    
     # Firms: If NA, then 0 -------------------------------------------------------
     firm_vars <- names(data)[grepl("firms|employment", names(data))]
     
@@ -29,36 +30,16 @@ for(country in c("canada", "mexico")){
       data[[var]][is.na(data[[var]])] <- 0
     }
     
-    # Subset Data ----------------------------------------------------------------
-    # NO: Only keep cells that had positive light or a firm at some point
-    # Only keep cells that had a firm at some point
-    data <- data %>%
-      group_by(id) %>%
-      #mutate(firms_positive_anyyear   = max(N_firms_sum_all, na.rm=T) > 0,
-      #       dmspols_positive_anyyear = max(dmspols_sum, na.rm=T) > 0,
-      #       viirs_positive_anyyear   = max(viirs_sum, na.rm=T) > 0) %>%
-      mutate(firms_positive_anyyear   = max(N_firms_sum_all, na.rm=T) > 0) %>%
-      ungroup() %>%
-      #dplyr::filter(firms_positive_anyyear | dmspols_positive_anyyear | viirs_positive_anyyear)
-      dplyr::filter(firms_positive_anyyear %in% T)
-    
-    #### Remove unneeded variables
-    #specific_vars_to_rm <- c("group.x", "group.y")
+    # Remove unneeded variables ------------------------------------------------
     firmsmean_var_to_rm <- names(data)[grepl("firms_mean", names(data))] # only need sum
     employmean_var_to_rm <- names(data)[grepl("employment_mean|empl_med_fact_mean|empl_med_mean", names(data))] # only need sum (for now?)
     employmean_other_var_to_rm <- names(data)[grepl("empl_med_fact_sum_[[:digit:]]|empl_med_sum_[[:digit:]]", names(data))] # only need sum (for now?)
     
-    vars_to_rm <- c(#specific_vars_to_rm,
-      firmsmean_var_to_rm,
-      employmean_var_to_rm,
-      employmean_other_var_to_rm)
+    vars_to_rm <- c(firmsmean_var_to_rm,
+                    employmean_var_to_rm,
+                    employmean_other_var_to_rm)
     
     data <- data[,!(names(data) %in% vars_to_rm)]
-    #data <- data %>%
-    #  dplyr::select(-all_of(vars_to_rm))
-    
-    #vars_to_keep <- names(data)[!grepl("_[[:digit:]][[:digit:]]", names(data))]
-    #data <- data[,vars_to_keep]
     
     # Transform Variables --------------------------------------------------------
     variables <- names(data)[grepl("dmspols|firms|employment|empl|viirs", names(data))]
@@ -70,10 +51,6 @@ for(country in c("canada", "mexico")){
     
     for(var in variables){
       data[[paste0(var, "_log")]] <- log(data[[var]] + 1)
-      #data[[paste0(var, "_g5")]] <- data[[var]] %>% cut2(g = 5) %>% as.numeric()
-      #data[[paste0(var, "_g10")]] <- data[[var]] %>% cut2(g = 10) %>% as.numeric()
-      #data[[paste0(var, "_g25")]] <- data[[var]] %>% cut2(g = 25) %>% as.numeric()
-      #data[[paste0(var, "_g50")]] <- data[[var]] %>% cut2(g = 50) %>% as.numeric()
     }
     
     # Complete ---------------------------------------------------------------
@@ -128,7 +105,7 @@ for(country in c("canada", "mexico")){
     }
     
     # Export -------------------------------------------------------------------
-    saveRDS(data, file.path(MERGED_DATA_PATH, paste0(dataset_i_clean, "_clean.Rds")))
+    saveRDS(data, file.path(MERGED_CLEAN_DATA_PATH, paste0(dataset_i_clean, "_clean.Rds")))
   }
 }
 #}

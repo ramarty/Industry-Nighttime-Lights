@@ -1,9 +1,18 @@
 # Summary Statistics
 
 # Load/Prep Data ---------------------------------------------------------------
-mex_dmspols <- load_grid_data_no_type("mexico", "*_dmspols_clean.Rds", "all")
-mex_viirs   <- load_grid_data_no_type("mexico", "*_viirs_clean.Rds",   "all")
-can         <- load_grid_data_no_type("canada", "*_clean.Rds",         "all")
+# mex_dmspols <- load_grid_data_no_type("mexico", "*_dmspols_clean.Rds", "all")
+# mex_viirs   <- load_grid_data_no_type("mexico", "*_viirs_clean.Rds",   "all")
+# can         <- load_grid_data_no_type("canada", "*_clean.Rds",         "all")
+
+mex_dmspols <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData", 
+                                 "mexico", "merged_clean_appended_allunits", "mex_dmspols_notype.Rds")) 
+
+mex_viirs <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData", 
+                               "mexico", "merged_clean_appended_allunits", "mex_viirs_notype.Rds")) 
+
+can <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData",
+                         "canada", "merged_clean_appended_allunits", "can_notype.Rds")) 
 
 mex_dmspols <- mex_dmspols[mex_dmspols$unit %in% "5km Grid",]
 mex_viirs   <- mex_viirs[mex_viirs$unit %in% "5km Grid",]
@@ -51,20 +60,17 @@ cat("\\hline \n")
 cat("\\multicolumn{7}{c}{\\bf Mexico, 2004} \\\\ \n")
 make_stats(mex_dmspols, "dmspols_mean",       2004)
 make_stats(mex_dmspols, "N_firms_sum_all",    2004)
-make_stats(mex_dmspols, "employment_sum_all", 2004)
 
 cat("\\hline \n")
 cat("\\multicolumn{7}{c}{\\bf Mexico, 2014} \\\\ \n")
 make_stats(mex_viirs,   "viirs_mean",         2014)
 make_stats(mex_dmspols, "dmspols_mean",       2014)
 make_stats(mex_dmspols, "N_firms_sum_all",    2014)
-make_stats(mex_dmspols, "employment_sum_all", 2014)
 
 cat("\\hline \n")
 cat("\\multicolumn{7}{c}{\\bf Mexico, 2020} \\\\ \n")
 make_stats(mex_viirs,   "viirs_mean",         2020)
 make_stats(mex_viirs, "N_firms_sum_all",    2020)
-make_stats(mex_viirs, "employment_sum_all", 2020)
 
 cat("\\hline \n")
 cat("\\end{tabular}")

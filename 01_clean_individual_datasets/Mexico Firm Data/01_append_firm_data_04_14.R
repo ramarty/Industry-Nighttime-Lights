@@ -1,20 +1,4 @@
-# Append Canada Firm Data
-
-# firmdata_df <- read_csv(file.path(data_file_path, "Mexico Industry Data", "RawData", "mexicofirm_04_14.csv"))
-# 
-# a <- firmdata_df %>%
-#   dplyr::group_by(code, naics6, year, naicsname) %>%
-#   dplyr::summarise(empl_min = min(empl),
-#                    empl_max = max(empl),
-#                    empl_sd  = sd(empl),
-#                    N = n())
-# 
-# firmdata_df$cat <- paste(firmdata_df$code, firmdata_df$naics6)
-# 
-# a <- firmdata_df[firmdata_df$cat %in% "30011 114119",]
-# 
-# code_df <- firmdata_df[firmdata_df$code %in% 30011,]
-# n_df <- firmdata_df[firmdata_df$naics6 %in% 114119,]
+# Append Mexico Firm Data
 
 # Load Data --------------------------------------------------------------------
 firmdata_df <- read_csv(file.path(data_file_path, "Mexico Industry Data", "RawData", "mexicofirm_04_14.csv"))
