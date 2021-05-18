@@ -1,28 +1,21 @@
 # Correlation Figure: Changes Within Unit
 
-# FIRMS
-# Mexico [DMSPOLS] <--> Canada [DMSPOLS]
-# Within | Across  <--> Within | Across
-
-# http://www.sthda.com/english/wiki/ggplot2-violin-plot-quick-start-guide-r-software-and-data-visualization
-
-country <- "Mexico"
-firm_var_i <- "employment_sum_all"
-ntl_var_i <- "VIIRS"
-
 # Load/Prep Within Unit Correlation --------------------------------------------
 cor_within <- readRDS(file.path(data_file_path, "Results", "correlation_within_unit.Rds"))
 cor_within <- cor_within %>%
   dplyr::filter(!is.na(cor),
-                #transform == "log",
+                transform == "log",
                 #unit %in% c("5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid"),
-                ntl_var %in% c("dmspolsharmon_mean", "viirs_mean")) %>%
-  dplyr::mutate(ntl_var = case_when(ntl_var %in% "dmspolsharmon_mean" ~ "DMSP-OLS",
-                                    ntl_var %in% "viirs_mean"        ~ "VIIRS"))
-
-# unit = unit %>% 
-#   str_replace_all(" Grid", "") %>%
-#   factor(levels = rev(c("5km", "10km", "25km", "50km", "100km")))
+                ntl_var %in% c("dmspolsharmon_sum", "viirs_sum")) %>%
+  dplyr::mutate(ntl_var = case_when(ntl_var %in% "dmspolsharmon_sum" ~ "DMSP-OLS",
+                                    ntl_var %in% "viirs_sum"        ~ "VIIRS")) %>%
+  dplyr::mutate(unit = unit %>% factor(levels = rev(c("City",
+                                                      "Grid in Cities",
+                                                      "5km Grid",
+                                                      "10km Grid",
+                                                      "25km Grid",
+                                                      "50km Grid",
+                                                      "100km Grid"))))
 
 # Function to Make Figure ------------------------------------------------------
 make_figure <- function(country_name, ntl_var_name, firm_var_name){
@@ -58,14 +51,13 @@ make_figure <- function(country_name, ntl_var_name, firm_var_name){
 }
 
 # Make Figures -----------------------------------------------------------------
-
 can_dmsp_firms  <- make_figure("Canada", "DMSP-OLS", "N_firms_sum_all")
 mex_dmsp_firms  <- make_figure("Mexico", "DMSP-OLS", "N_firms_sum_all")
 mex_viirs_firms <- make_figure("Mexico", "VIIRS",    "N_firms_sum_all")
 
 can_dmsp_employ  <- make_figure("Canada", "DMSP-OLS", "employment_sum_all")
-mex_dmsp_employ  <- make_figure("Mexico", "DMSP-OLS", "employment_sum_all")
-mex_viirs_employ <- make_figure("Mexico", "VIIRS",    "employment_sum_all")
+#mex_dmsp_employ  <- make_figure("Mexico", "DMSP-OLS", "employment_sum_all")
+#mex_viirs_employ <- make_figure("Mexico", "VIIRS",    "employment_sum_all")
 
 # Append / Arrange Figures -----------------------------------------------------
 firms <- ggarrange(can_dmsp_firms,
@@ -83,7 +75,7 @@ employment <- ggarrange(can_dmsp_employ,
                                   color = "black", face = "bold", size = 14))
 
 p <- ggarrange(firms, employment,
-          nrow = 1) %>%
+               nrow = 1) %>%
   annotate_figure(top = text_grob("Distribution of Within Unit Correlation between NTL and Firm Outcomes", 
                                   color = "black", face = "bold", size = 14))
 

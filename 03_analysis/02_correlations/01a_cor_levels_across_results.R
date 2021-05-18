@@ -11,14 +11,14 @@ can <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData",
                          "canada", "merged_clean_appended_allunits", "can_notype.Rds")) 
 
 
-mex_dmspols <- mex_dmspols[mex_dmspols$year %in% 2014,]
-mex_viirs <- mex_viirs[mex_viirs$year %in% 2014,]
-
-mex_dmspols <- mex_dmspols[mex_dmspols$unit %in% "25km Grid",]
-mex_viirs <- mex_viirs[mex_viirs$unit %in% "25km Grid",]
-
-mex_dmspols <- mex_dmspols[mex_dmspols$N_firms_sum_all > 0,]
-mex_viirs <- mex_viirs[mex_viirs$N_firms_sum_all > 0,]
+# mex_dmspols <- mex_dmspols[mex_dmspols$year %in% 2014,]
+# mex_viirs <- mex_viirs[mex_viirs$year %in% 2014,]
+# 
+# mex_dmspols <- mex_dmspols[mex_dmspols$unit %in% "25km Grid",]
+# mex_viirs <- mex_viirs[mex_viirs$unit %in% "25km Grid",]
+# 
+# mex_dmspols <- mex_dmspols[mex_dmspols$N_firms_sum_all > 0,]
+# mex_viirs <- mex_viirs[mex_viirs$N_firms_sum_all > 0,]
 
 # Correlation ------------------------------------------------------------------
 country <- "Canada"
@@ -51,12 +51,13 @@ for(country in c("Canada", "Mexico")){
     for(year in c(YEARS, "All")){
       for(unit in UNITS){
         for(firm_var in c("employment_sum_all", "N_firms_sum_all")){
-          for(transform in c("level", "log")){
+          for(transform in c("log")){ # "level", "log"
             for(difference in c("level", paste0("diff",1:MAX_DIFF))){
               print(paste(year, country, unit, difference, transform, ntl_var, firm_var, sep = " - "))
               
               if(year %in% as.character(2000:2010) & grepl("viirs", ntl_var)) next
               if(year %in% as.character(2015:2020) & grepl("dmspols", ntl_var)) next
+              if(country == "Mexico" & firm_var == "employment_sum_all") next
               
               ## Define base data and variables
               df_temp    <- df

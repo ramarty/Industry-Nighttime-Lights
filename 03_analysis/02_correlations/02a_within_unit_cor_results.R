@@ -2,13 +2,13 @@
 
 # Load/Prep Data ---------------------------------------------------------------
 mex_dmspols <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData", 
-                                 "mexico", "merged_appended_allunits", "mex_dmspols_notype.Rds")) 
+                                 "mexico", "merged_clean_appended_allunits", "mex_dmspols_notype.Rds")) 
 
 mex_viirs <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData", 
-                               "mexico", "merged_appended_allunits", "mex_viirs_notype.Rds")) 
+                               "mexico", "merged_clean_appended_allunits", "mex_viirs_notype.Rds")) 
 
 can <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData",
-                         "canada", "merged_appended_allunits", "can_notype.Rds")) 
+                         "canada", "merged_clean_appended_allunits", "can_notype.Rds")) 
 
 # Correlation ------------------------------------------------------------------
 country <- "Canada"
@@ -20,7 +20,7 @@ transform <- "log"
 
 df_out_all <- data.frame(NULL)
 for(country in c("Canada", "Mexico")){
-  for(ntl_var in c("dmspolsharmon_mean", "viirs_mean")){
+  for(ntl_var in c("dmspolsharmon_sum", "viirs_sum")){
     
     ## Grab dataset
     if(country %in% "Canada")                             df <- can
@@ -32,10 +32,8 @@ for(country in c("Canada", "Mexico")){
     
     for(unit in UNITS){
       for(firm_var in c("employment_sum_all", 
-                        "firms_sum_all",
-                        #"empl_med_sum_all", 
                         "N_firms_sum_all")){
-        for(transform in c("level", "log")){
+        for(transform in c("log")){
           print(paste(country, unit, transform, ntl_var, firm_var, sep = " - "))
           
           ## Define base data and variables
@@ -46,6 +44,7 @@ for(country in c("Canada", "Mexico")){
           ## Check for skips
           if(is.null(df_temp[[ntl_var_i]]))  next
           if(is.null(df_temp[[firm_var_i]])) next
+          if(country %in% "Mexico" & firm_var == "employment_sum_all") next
           
           ## Subset by unit
           df_temp <- df_temp[(df_temp$unit %in% unit),]

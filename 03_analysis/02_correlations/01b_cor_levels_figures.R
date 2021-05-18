@@ -81,8 +81,9 @@ make_figure <- function(country, df_out_all){
 p_mex <- make_figure("Mexico", df_out_all)
 p_can <- make_figure("Canada", df_out_all)
 
-p <- ggarrange(p_mex,
-               p_can) 
+p <- ggarrange(p_can,
+               p_mex,
+               widths = c(0.6, 0.4)) 
 ggsave(p, filename = file.path(figures_file_path, "levels_cor.png"), height = 5, width=15)
 
 
