@@ -55,19 +55,18 @@ for(country in c("Canada", "Mexico")){
             for(difference in c("level", paste0("diff",1:MAX_DIFF))){
               print(paste(year, country, unit, difference, transform, ntl_var, firm_var, sep = " - "))
               
-              if(year %in% as.character(2000:2010) & grepl("viirs", ntl_var)) next
-              if(year %in% as.character(2015:2020) & grepl("dmspols", ntl_var)) next
-              if(country == "Mexico" & firm_var == "employment_sum_all") next
-              
               ## Define base data and variables
               df_temp    <- df
               ntl_var_i  <- ntl_var
               firm_var_i <- firm_var
               
-              ## Check for skips
+              ## When to skip
+              if(year %in% as.character(2000:2010) & grepl("viirs", ntl_var)) next
+              if(year %in% as.character(2015:2020) & grepl("dmspols", ntl_var)) next
+              if(country == "Mexico" & firm_var == "employment_sum_all") next
               if(is.null(df_temp[[ntl_var_i]]))  next
               if(is.null(df_temp[[firm_var_i]])) next
-              
+
               ## Subset by unit and year
               if(year %in% "All"){
                 df_temp <- df_temp[(df_temp$unit %in% unit),]

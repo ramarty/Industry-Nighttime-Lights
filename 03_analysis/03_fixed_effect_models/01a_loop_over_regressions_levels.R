@@ -2,13 +2,13 @@
 
 # Load/Prep Data ---------------------------------------------------------------
 mex_dmspols <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData", 
-                                 "mexico", "merged_appended_allunits", "mex_dmspols_notype.Rds")) 
+                                 "mexico", "merged_clean_appended_allunits", "mex_dmspols_notype.Rds")) 
 
 mex_viirs <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData", 
-                               "mexico", "merged_appended_allunits", "mex_viirs_notype.Rds")) 
+                               "mexico", "merged_clean_appended_allunits", "mex_viirs_notype.Rds")) 
 
 can <- readRDS(file.path(project_file_path, "Data", "Grid", "FinalData",
-                         "canada", "merged_appended_allunits", "can_notype.Rds")) 
+                         "canada", "merged_clean_appended_allunits", "can_notype.Rds")) 
 
 mex_dmspols$year %>% table()
 mex_viirs$year %>% table()
@@ -25,11 +25,13 @@ df_out_all <- data.frame(NULL)
 long_diff <- F
 
 for(industry_var in c("employment_sum_all_log", "N_firms_sum_all_log")){
-  for(ntl_var in c("dmspolsharmon_mean_log", "viirs_mean_log")){
+  for(ntl_var in c("dmspolsharmon_sum_log", "viirs_sum_log")){
     for(unit in c("5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid", "City" ,"Grid in Cities")){
       for(country in c("mexico", "canada")){
         
         print(paste(long_diff, industry_var, ntl_var, unit, country))
+        
+        if(country == "mexico" & industry_var == "employment_sum_all_log") next
         
         ## Define data
         if(country %in% "canada") df <- can
@@ -46,13 +48,13 @@ for(industry_var in c("employment_sum_all_log", "N_firms_sum_all_log")){
         df <- df[df$unit %in% unit,]
         
         ## Only keep if firms exist
-        if(unit != "Grid in Cities"){
-          df <- df %>%
-            group_by(id) %>%
-            mutate(industry_var_max = max(industry_var, na.rm = T)) %>%
-            ungroup() %>%
-            filter(industry_var_max > 0)
-        }
+        #if(unit != "Grid in Cities"){
+        df <- df %>%
+          group_by(id) %>%
+          mutate(industry_var_max = max(industry_var, na.rm = T)) %>%
+          ungroup() %>%
+          filter(industry_var_max > 0)
+        #}
         
         ## Regressions - Industry DV
         dvindust_lm_yr   <- felm(industry_var ~ ntl_var | year      | 0 | 0, data = df) %>% extract_coefs() %>% mutate(FE = "yr", splag = F) 

@@ -11,26 +11,41 @@ df$FE[df$long_diff %in% T] <- "long-diff"
 
 df <- df %>%
   filter(FE %in% c("id", "yr", "long-diff"),
-         ntl_var %in% c("viirs_mean_log", "dmspolsharmon_mean_log"),
+         ntl_var %in% c("viirs_sum_log", "dmspolsharmon_sum_log"),
          dv_type %in% "ntl", # industry, ntl
          var != "(Intercept)",
          splag %in% F) %>%
   mutate(unit = unit %>% factor(levels = c("City", "Grid in Cities", "5km Grid", "10km Grid", "25km Grid", "50km Grid", "100km Grid")),
-         ntl_var = case_when(ntl_var == "viirs_mean_log" ~ "VIIRS",
-                             ntl_var == "dmspolsharmon_mean_log" ~ "DMSP-OLS"),
-         country = country %>% tools::toTitleCase()) 
+         industry_var = case_when(industry_var == "employment_sum_all_log" ~ "Employment",
+                                  industry_var == "N_firms_sum_all_log"    ~ "N Firms"),
+         ntl_var = case_when(ntl_var == "viirs_sum_log" ~ "VIIRS",
+                             ntl_var == "dmspolsharmon_sum_log" ~ "DMSP-OLS"),
+         country = country %>% tools::toTitleCase(),
+         title = paste0(country, "\n", ntl_var, " & ", industry_var))
+
+## Remove Within Unit Different for Canada, VIIRS
+df <- df[!(df$country %in% "Canada" & df$ntl_var %in% "VIIRS" & df$FE %in% "id"),]
+
+## Prep Titles
+subset_tf <- df$long_diff %in% T & df$country %in% "Canada" & df$ntl_var %in% "DMSP-OLS"
+df$title[subset_tf] <- paste0(df$title[subset_tf], "\n[12 Years]")
+
+subset_tf <- df$long_diff %in% T & df$country %in% "Canada" & df$ntl_var %in% "VIIRS"
+df$title[subset_tf] <- paste0(df$title[subset_tf], "\n[2 Years]")
+
+subset_tf <- df$long_diff %in% T & df$country %in% "Mexico" & df$ntl_var %in% "DMSP-OLS"
+df$title[subset_tf] <- paste0(df$title[subset_tf], "\n[10 Years]")
+
+subset_tf <- df$long_diff %in% T & df$country %in% "Mexico" & df$ntl_var %in% "VIIRS"
+df$title[subset_tf] <- paste0(df$title[subset_tf], "\n[6 Years]")
 
 #df <- df[grepl("km", df$unit),]
 
 # Figure Function --------------------------------------------------------------
-make_figure <- function(df, FE_i, industry_var_i){
-  
-  if(industry_var_i %in% "employment_sum_all_log") title <- "Elasticity of NTL and Total Employment"
-  if(industry_var_i %in% "N_firms_sum_all_log")    title <- "Elasticity of NTL and Number of Firms"
+make_figure <- function(df, FE_i, title_main){
   
   df %>%
-    filter(industry_var %in% industry_var_i,
-           FE %in% FE_i) %>%
+    filter(FE %in% FE_i) %>%
     ggplot(aes(y = coef,
                ymin = ci2_5,
                ymax = ci97_5,
@@ -41,10 +56,10 @@ make_figure <- function(df, FE_i, industry_var_i){
     geom_linerange(position = position_dodge(width = 1)) +
     labs(x = NULL,
          y = "Coefficient (+/- 95% CI)",
-         title = title) +
+         title = title_main) +
     coord_flip() +
     theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 11)) +
-    facet_wrap(~country + ntl_var,
+    facet_wrap(~title,
                scales = "free_x",
                nrow = 1) +
     theme(strip.background = element_blank(),
@@ -52,50 +67,14 @@ make_figure <- function(df, FE_i, industry_var_i){
 }
 
 # Make Figure ------------------------------------------------------------------
+p_yr <- make_figure(df, "yr", "Panel, Year Fixed Effects - Association Across Levels")
+p_id <- make_figure(df, "id", "Panel, Unit Fixed Effects - Association Across Time")
+p_ld <- make_figure(df, "long-diff", "Long Difference")
 
-## Year FE
-p_yr_employ <- make_figure(df, "yr", "employment_sum_all_log")
-p_yr_firm   <- make_figure(df, "yr", "N_firms_sum_all_log")
-
-p_yr <- ggarrange(p_yr_employ, p_yr_firm,
-                  common.legend = T,
-                  nrow = 1) %>%
-  annotate_figure(top = text_grob("Year Fixed Effects - Association Across Levels", 
-                                  color = "black", face = "bold", size = 14))
-
-## Unit FE
-p_id_employ <- make_figure(df, "id", "employment_sum_all_log")
-p_id_firm   <- make_figure(df, "id", "N_firms_sum_all_log")
-
-p_id <- ggarrange(p_id_employ, p_id_firm,
-                  common.legend = T,
-                  nrow = 1) %>%
-  annotate_figure(top = text_grob("Unit Fixed Effects - Association Across Time", 
-                                  color = "black", face = "bold", size = 14))
-
-## Long Difference
-p_ld_employ <- make_figure(df, "long-diff", "employment_sum_all_log")
-p_ld_firm   <- make_figure(df, "long-diff", "N_firms_sum_all_log")
-
-p_ld <- ggarrange(p_ld_employ, p_ld_firm,
-                  common.legend = T,
-                  nrow = 1) %>%
-  annotate_figure(top = text_grob("Long Difference", 
-                                  color = "black", face = "bold", size = 14))
-
-
-## Append Everything Together
 p <- ggarrange(p_yr,
-               p_id,
+               ggarrange(NA, p_id, NA, nrow = 1, widths = c(0.15, 0.7, 0.15)),
                p_ld,
-               common.legend = T,
-               nrow = 3)
+               ncol = 1)
 
 ggsave(p, filename = file.path(figures_file_path, "fe_elasticity_fig.png"), 
        height = 9, width=12)
-
-
-
-
-
-

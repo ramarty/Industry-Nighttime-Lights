@@ -78,8 +78,10 @@ for(country in c("canada", "mexico")){
     data_merged <- data_merged %>%
       dplyr::group_by(id) %>%
       dplyr::mutate(firms_positive_anyyear   = max(N_firms_sum_all, na.rm=T) > 0) %>%
-      dplyr::ungroup() %>%
-      dplyr::filter(firms_positive_anyyear %in% T)
+      dplyr::ungroup() #%>%
+      #dplyr::filter(firms_positive_anyyear %in% T)
+    # Don't filter here, as want all grids for the city figures; we filter in 
+    # the 04_clean_datasets.R script
     
     ## Export
     saveRDS(data_merged, file.path(MERGED_DATA_PATH, paste0(dataset_type, ".Rds")))

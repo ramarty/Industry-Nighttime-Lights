@@ -67,6 +67,7 @@ library(tidyr)
 library(ggpubr)
 library(stringi)
 library(leaflet)
+library(ggtext)
 
 # User Defined Functions -------------------------------------------------------
 source("https://raw.githubusercontent.com/ramarty/fast-functions/master/R/functions_in_chunks.R")

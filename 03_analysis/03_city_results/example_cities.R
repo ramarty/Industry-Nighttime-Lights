@@ -37,7 +37,7 @@ for(country_name in c("canada", "mexico")){
     group_by(city_name) %>%
     dplyr::summarise(N = n()) %>%
     arrange(-N) %>%
-    head(5) %>%
+    head(7) %>%
     pull(city_name)
   
   p <- lapply(cities, function(city_name_i){
@@ -56,8 +56,8 @@ for(country_name in c("canada", "mexico")){
     dmsp_r  <- dmsp_r %>% crop(dmsp_sp)
     
     r_data_firms <- rasterize(viirs_sp, viirs_r, field = "N_firms_sum_all")
-    r_data_viirs <- rasterize(viirs_sp, viirs_r, field = "viirs_mean")
-    r_data_dmsp <- rasterize(dmsp_sp, dmsp_r,   field = "dmspolsharmon_mean")
+    r_data_viirs <- rasterize(viirs_sp, viirs_r, field = "viirs_sum")
+    r_data_dmsp <- rasterize(dmsp_sp, dmsp_r,   field = "dmspolsharmon_sum")
     
     r_data_firms_df <- r_data_firms %>% 
       coordinates() %>%
@@ -76,7 +76,22 @@ for(country_name in c("canada", "mexico")){
     
     #### Name/Theme
     #city_name_i <- city_name_i %>% str_replace_all("-.*", "") %>% str_replace_all("/.*", "") %>% str_squish()
-    city_name_i <- city_name_i %>% str_replace_all("[[:digit:]]", "") %>% str_squish() %>% str_replace_all(" -$", "")
+    city_name_i <- city_name_i %>% 
+      str_replace_all("[[:digit:]]", "") %>% 
+      str_squish() %>% 
+      str_replace_all(" -$", "") %>%
+      tolower() %>%
+      tools::toTitleCase()
+    
+    if(country_name == "mexico"){
+      # [City] - [District]; keep city
+      city_name_i <- city_name_i %>% str_replace_all("-.*", "") %>% str_squish()
+    }
+    
+    if(country_name == "canada"){
+      # [District] - [City]; keep city
+      city_name_i <- city_name_i %>% str_replace_all(".*-", "") %>% str_squish()
+    }
     
     theme_custom <- theme(plot.title = element_text(hjust = 0.5,
                                                     face = "bold"),
@@ -110,38 +125,40 @@ for(country_name in c("canada", "mexico")){
                     fill = log(value+1)),
                 size = 1.5) +
       scale_fill_viridis(na.value = "white") +
-      labs(color = "Employment",
-           title = "Employment") +
+      labs(color = "N Firms",
+           title = "N Firms") +
       theme_void() +
       theme_custom
     
     p_cor_firms_viirs <- viirs_df %>%
       filter(employment_sum_all > 0) %>%
       ggplot() +
-      geom_point(aes(x = log(employment_sum_all+1),
-                     y = log(viirs_mean+1)),
-                 size = 0.5) +
-      labs(x = "Employment (log scale)",
+      geom_point(aes(x = log(N_firms_sum_all+1),
+                     y = log(viirs_sum+1)),
+                 size = 0.5,
+                 alpha = 0.5) +
+      labs(x = "N Firms (log scale)",
            y = "NTL (log scale)",
-           title = "VIIRS & Employment") +
+           title = "VIIRS & N Firms") +
       theme_minimal() +
       theme_custom
     
     p_cor_firms_dmsp <- dmsp_df %>%
       filter(employment_sum_all > 0) %>%
       ggplot() +
-      geom_point(aes(x = log(employment_sum_all+1),
-                     y = log(dmspolsharmon_median+1)),
-                 size = 0.5) +
-      labs(x = "Employment (log scale)",
+      geom_point(aes(x = log(N_firms_sum_all+1),
+                     y = log(dmspolsharmon_sum+1)),
+                 size = 0.5,
+                 alpha = 0.5) +
+      labs(x = "N Firms (log scale)",
            y = "NTL (log scale)",
-           title = "DMSP & Employment") +
+           title = "DMSP & N Firms") +
       theme_minimal() +
       theme_custom
     
     ggarrange(p_map_firms, p_map_viirs, p_map_dmsp, p_cor_firms_viirs, p_cor_firms_dmsp, nrow = 1) %>%
       annotate_figure(
-        top = text_grob(city_name_i, color = "black", face = "bold", size = 14),
+        top = text_grob(city_name_i, color = "black", face = "bold", size = 16),
       )
     
   })
@@ -151,11 +168,13 @@ for(country_name in c("canada", "mexico")){
                      p[[3]],
                      p[[4]],
                      p[[5]],
-                     nrow = 5)
+                     p[[6]],
+                     p[[7]],
+                     nrow = 7)
   
   ggsave(p_all, 
          filename = file.path(figures_file_path, paste0("within_city_maps_cor_", country_name, ".png")),
-         height = 12, 
+         height = 16, 
          width = 12)
   
 }

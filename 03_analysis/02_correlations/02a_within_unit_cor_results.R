@@ -45,6 +45,7 @@ for(country in c("Canada", "Mexico")){
           if(is.null(df_temp[[ntl_var_i]]))  next
           if(is.null(df_temp[[firm_var_i]])) next
           if(country %in% "Mexico" & firm_var == "employment_sum_all") next
+          if(country %in% "Canada" & firm_var == "viirs_sum")          next
           
           ## Subset by unit
           df_temp <- df_temp[(df_temp$unit %in% unit),]

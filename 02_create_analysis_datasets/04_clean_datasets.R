@@ -22,6 +22,7 @@ for(country in c("canada", "mexico")){
     MERGED_CLEAN_DATA_PATH <- file.path(data_file_path, "Grid", "FinalData", country, "merged_clean_datasets")
     
     data <- readRDS(file.path(MERGED_DATA_PATH, dataset_i))
+    data <- data[data$firms_positive_anyyear %in% T,]
     
     # Firms: If NA, then 0 -------------------------------------------------------
     firm_vars <- names(data)[grepl("firms|employment", names(data))]

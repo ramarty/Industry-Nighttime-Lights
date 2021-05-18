@@ -1,7 +1,5 @@
 # Analysis
 
-library(ggtext)
-
 # Load Data --------------------------------------------------------------------
 cor_df <- readRDS(file.path(data_file_path, "Results", "correlation_within_unit.Rds"))
 
@@ -18,13 +16,27 @@ cor_df <- cor_df %>%
   dplyr::mutate(firm_var_change_sq = firm_var_change^2) %>%
   dplyr::filter(transform %in% "log")
 
+cor_df <- cor_df %>%
+  dplyr::mutate(ntl_var = case_when(ntl_var %in% "dmspolsharmon_sum" ~ "DMSP-OLS",
+                                    ntl_var %in% "viirs_sum"        ~ "VIIRS"),
+                firm_var = case_when(firm_var %in% "N_firms_sum_all"    ~ "N Firms",
+                                     firm_var %in% "employment_sum_all" ~ "Employment")) %>%
+  dplyr::mutate(unit = unit %>% factor(levels = c("City",
+                                                  "Grid in Cities",
+                                                  "5km Grid",
+                                                  "10km Grid",
+                                                  "25km Grid",
+                                                  "50km Grid",
+                                                  "100km Grid"))) %>%
+  dplyr::mutate(title = paste0(country, "\n", ntl_var, " & ", firm_var))
+
 # Regressions ------------------------------------------------------------------
 ## Dataframe that includes model
 lm_list <- cor_df %>%
-  group_by(country, unit, ntl_var, firm_var) %>%
+  dplyr::group_by(country, unit, ntl_var, firm_var, title) %>%
   do(model = lm(cor ~ firm_var_min + firm_var_change, data = .)) %>%
-  ungroup() %>%
-  mutate(model_id = 1:n())
+  dplyr::ungroup() %>%
+  dplyr::mutate(model_id = 1:n())
 
 ## Add model parameters
 lm_coefs <- map_df(lm_list$model_id, function(i){
@@ -42,105 +54,54 @@ lm_coefs <- lm_coefs %>%
 
 ## Cleanup
 lm_coefs <- lm_coefs %>%
-  mutate(adj.r.squared = "R<sup>2</sup>: " %>% paste0(round(adj.r.squared, 3))) %>%
+  mutate(adj.r.squared = paste0("<b>R<sup>2</sup>: ", round(adj.r.squared, 3)), "</b>") %>%
   mutate(var = case_when(var == "firm_var_change" ~ "Firm Growth Rate",
                          var == "firm_var_min" ~ "Firm Min. Value (Log)",
-                         TRUE ~ var)) %>%
-  mutate(ntl_var = case_when(ntl_var == "dmspolsharmon_mean" ~ "DMSP-OLS",
-                             ntl_var == "viirs_mean" ~ "VIIRS")) %>%
-  mutate(unit = unit %>% factor(levels = c("City",
-                                           "Grid in Cities",
-                                           "5km Grid",
-                                           "10km Grid",
-                                           "25km Grid",
-                                           "50km Grid",
-                                           "100km Grid")))
+                         TRUE ~ var)) 
 
 lm_coefs <- lm_coefs[!(lm_coefs$country == "Canada" & lm_coefs$ntl_var == "VIIRS"),]
 
-lm_coefs <- lm_coefs[lm_coefs$unit != "100km Grid",]
-
 # Visualize --------------------------------------------------------------------
-make_figure <- function(country_i,
-                        firmvar_i){
-  
-  if(firmvar_i == "N_firms_sum_all")    firmvar_clean <- "N Firms"
-  if(firmvar_i == "employment_sum_all") firmvar_clean <- "Employment"
-  
-  if(country_i == "Mexico" & firmvar_i == "N_firms_sum_all") text_x <- 0.2
-  if(country_i == "Mexico" & firmvar_i == "employment_sum_all") text_x <- 0.1
-  
-  if(country_i == "Canada" & firmvar_i == "N_firms_sum_all") text_x <- 0.025
-  if(country_i == "Canada" & firmvar_i == "employment_sum_all") text_x <- 0.025
-  
-  lm_coefs %>%
-    filter(country == country_i) %>%
-    filter(firm_var == firmvar_i) %>%
-    ggplot(aes(y=unit,
-               x = coef,
-               xmin = ci2_5,
-               xmax = ci97_5)) +
-    geom_vline(xintercept = 0,
-               alpha = 0.7) +
-    geom_point(aes(color = var),
-               position = position_dodge(0.2)) + 
-    geom_linerange(aes(color = var),
-                   position = position_dodge(0.2)) +
-    geom_richtext(aes(x = text_x, 
-                      y = unit,
-                      label = adj.r.squared),
-                  fill = NA, label.color = NA, 
-                  label.padding = grid::unit(rep(0, 4), "pt"),
-                  vjust = -0.8,
-                  size = 3) +
-    labs(color = "Variable",
-         x = "Coef (+/- 95% CI)",
-         y = NULL,
-         title = firmvar_clean) +
-    #scale_color_manual(values = c("dodgerblue3", "darkorange2")) +
-    theme(plot.title = element_text(hjust = 0.5)) +
-    facet_wrap(~ntl_var)
-  
-}
+text_x <- 0.15
 
-mex_firms <- make_figure("Mexico", "N_firms_sum_all")
-mex_employ <- make_figure("Mexico", "employment_sum_all")
+p <- lm_coefs %>%
+  ggplot(aes(y=unit,
+             x = coef,
+             xmin = ci2_5,
+             xmax = ci97_5)) +
+  geom_vline(xintercept = 0,
+             alpha = 0.7) +
+  geom_point(aes(color = var),
+             position = position_dodge(0.2)) + 
+  geom_linerange(aes(color = var),
+                 position = position_dodge(0.2)) +
+  geom_richtext(aes(x = text_x, 
+                    y = unit,
+                    label = adj.r.squared),
+                fill = NA, label.color = NA, 
+                label.padding = grid::unit(rep(0, 4), "pt"),
+                vjust = -0.8,
+                size = 3) +
+  labs(color = "Variable",
+       x = "Coef (+/- 95% CI)",
+       y = NULL) +
+  scale_color_manual(values = c("dodgerblue3", "darkorange2"),
+                     guide = guide_legend(reverse = TRUE)) +
+  theme(strip.text = element_text(face = "bold", size = 9),
+        strip.background = element_blank()) +
+  facet_wrap(~title,
+             nrow = 1)
 
-can_firms <- make_figure("Canada", "N_firms_sum_all")
-can_employ <- make_figure("Canada", "employment_sum_all")
-
-can <- ggarrange(can_firms,
-                 can_employ,
-                 ncol = 2,
-                 common.legend = T,
-                 legend = "right") %>%
-  annotate_figure(top = text_grob("Canada", color = "black", face = "bold", size = 14))
-
-mex <- ggarrange(mex_firms,
-                 mex_employ,
-                 ncol = 2,
-                 common.legend = T,
-                 legend = "right") %>%
-  annotate_figure(top = text_grob("Mexico", color = "black", face = "bold", size = 14))
-
-p <- ggarrange(can,
-               mex,
-               nrow = 2)
-
-ggsave(p, filename = file.path("~/Desktop", "predict_within_cor_reg.png"),
-       height = 10, 
-       width = 12)
-
-# ggsave(p, filename = file.path(figures_file_path, "predict_within_cor_reg.png"),
-#        height = 10, 
-#        width = 12)
+ggsave(p, filename = file.path(figures_file_path, "predict_within_cor_reg.png"),
+       height = 5, 
+       width = 10)
 
 # Other Figure -----------------------------------------------------------------
 cor_df %>%
   filter(country == "Mexico",
          unit == "5km Grid",
-         firm_var == "N_firms_sum_all",
-         ntl_var == "viirs_mean") %>%
+         firm_var == "N Firms",
+         ntl_var == "VIIRS") %>%
   ggplot(aes(x = firm_var_change,
              y = cor)) +
   geom_point(alpha = 0.4,
@@ -148,6 +109,7 @@ cor_df %>%
   labs(x = "Firm Growth Rate",
        y = "Correlation",
        title = "Firm Growth Rate within Units vs. Within Unit\nCorrelation Between N Firms and VIIRS\n(Mexico, 5km Grid)") +
+  theme(plot.title = element_text(size = 10)) +
   ggsave(filename = file.path(figures_file_path, "withincor_vs_firmgrowth.png"),
          height = 4, 
          width = 4)
