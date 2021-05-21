@@ -50,7 +50,7 @@ make_figure <- function(country, df_out_all){
     ggplot(aes(y = b,
                x = unit,
                color = year,
-               group =year,
+               group = year,
                fill = ntl_var,
                ymin = ci_low,
                ymax = ci_high)) +
