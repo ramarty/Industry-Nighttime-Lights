@@ -8,18 +8,9 @@ df <- readRDS(file.path(data_file_path, "Results", "by_firm_type_ind_reg.Rds"))
 # Prep Data --------------------------------------------------------------------
 df <- df %>%
   mutate(ind_name = 
-           case_when(ind_id == 11 ~ "Agriculture",
-                     ind_id == 21 ~ "Mining/Utilities",
-                     ind_id == 23 ~ "Construction",
-                     ind_id == 31 ~ "Manufacturing",
-                     ind_id == 42 ~ "Wholesale Trade",
-                     ind_id == 44 ~ "Retail Trade",
-                     ind_id == 48 ~ "Transportation and Warehousing",
-                     ind_id == 51 ~ "Information/Finance/Real Estate",
-                     ind_id == 61 ~ "Education/Health Care",
-                     ind_id == 71 ~ "Entertainment/Food Services",
-                     ind_id == 81 ~ "Other Services",
-                     ind_id == 93 ~ "Public Administration")) %>%
+           case_when(ind_type == "agriculture" ~ "Agriculture",
+                     ind_type == "bigindustry" ~ "Large Industry",
+                     ind_type == "services" ~ "Services")) %>%
   mutate(df_type = 
            case_when(df_type == "city" ~ "City",
                      df_type == "citygrid" ~ "Grid in Cities",

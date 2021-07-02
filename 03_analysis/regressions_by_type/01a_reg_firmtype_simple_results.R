@@ -14,11 +14,30 @@
 
 BUFFER <- 5
 
-mex_ind_ids <- c(11, 21, 23, 31, 42, 44, 48, 51, 61, 71, 81, 93)
-can_ind_ids <- c(11, 21, 23, 31, 42, 44, 48, 51, 61, 71, 81)
+#mex_ind_ids <- c(11, 21, 23, 31, 42, 44, 48, 51, 61, 71, 81, 93)
+#can_ind_ids <- c(11, 21, 23, 31, 42, 44, 48, 51, 61, 71, 81)
+
+# Agriculture
+# 11
+
+# Physical Change // Big Industry
+# 21, 23, 31, 42, 48, 
+
+# Services
+# 44, 51, 61, 71, 81, 93
+
+mex_ind_id_list <- list(agriculture = c(11),
+                        bigindustry = c(21,23,31,42,48),
+                        services = c(44,51,61,71,81,93))
+
+can_ind_id_list <- list(agriculture = c(11),
+                        bigindustry = c(21,23,31,42,48),
+                        services = c(44,51,61,71,81))
+
+ind_types_all <- c("agriculture", "bigindustry", "services")
 
 # Regression Function ----------------------------------------------------------
-ind_id <- 81
+ind_type <- "bigindustry"
 ntl_var <- "viirs_sum_log"
 firm_var <- "N_firms_sum"
 year_ld_start <- 2001
@@ -26,7 +45,8 @@ year_ld_end <- 2013
 country <- "mexico"
 df_type <- "city"
 
-run_regs <- function(ind_id, 
+run_regs <- function(ind_type,
+                     ind_id_list,
                      ntl_var, 
                      firm_var, 
                      year_ld_start, 
@@ -34,7 +54,12 @@ run_regs <- function(ind_id,
                      country, 
                      df_type){
   
-  print(paste(ind_id, ntl_var, firm_var, country, df_type))
+  print(paste(ind_type, ntl_var, firm_var, country, df_type))
+  
+  ind_ids <- ind_id_list[[ind_type]]
+  
+  ind_ids_alltypes <- ind_id_list %>% unlist() %>% as.numeric()
+  ind_not_ids <- ind_ids_alltypes[!(ind_ids_alltypes %in% ind_ids)]
   
   ## Load Data
   if(grepl("hex", df_type))                           df_name <- df_type
@@ -54,12 +79,12 @@ run_regs <- function(ind_id,
                              matches("employment_sum_[0-9]{2}$"))
   
   ## Prep Variables
-  firm_var_i <- paste0(firm_var, "_", ind_id)
-  firm_var_noti <- names(df) %>% str_subset(firm_var) %>% stri_subset_fixed(ind_id, negate = TRUE)
+  firm_var_is <- paste0(firm_var, "_", ind_ids)
+  firm_var_not_is <- paste0(firm_var, "_", ind_not_ids)
   
   df$ntl_var    <- df[,ntl_var] 
-  df$firm_var_i <- df[,firm_var_i] 
-  df$firm_var_noti <- df[,firm_var_noti] %>% apply(1, sum, na.rm = T)
+  df$firm_var_i <- df[,firm_var_is] %>% as.data.frame() %>% apply(1, sum, na.rm=T) # as.data.frame needed in cases only 1 id
+  df$firm_var_noti <- df[,firm_var_not_is] %>% apply(1, sum, na.rm = T) # as.data.frame needed in cases only 1 id
   
   if(sd(df$firm_var_i) > 0){
     
@@ -101,7 +126,7 @@ run_regs <- function(ind_id,
       lm_id_other %>% mutate(type = "id_FE",     control_other = T),
       lm_ld_other %>% mutate(type = "long_diff", control_other = T)
     ) %>%
-      mutate(ind_id   = ind_id,
+      mutate(ind_type   = ind_type,
              ntl_var  = ntl_var,
              firm_var = firm_var,
              df_type = df_type,
@@ -125,14 +150,14 @@ for(dataset in c("city", "citygrid", "hex_5km", "hex_10km", "hex_25km", "hex_50k
     
     results_all <- bind_rows(
       results_all,
-      map_df(can_ind_ids, run_regs, "dmspolsharmon_sum_log", "N_firms_sum", 2001, 2013, "canada", dataset),
-      map_df(can_ind_ids, run_regs, "viirs_sum_log",         "N_firms_sum", 2011, 2013, "canada", dataset),
+      map_df(ind_types_all, run_regs, can_ind_id_list, "dmspolsharmon_sum_log", "N_firms_sum", 2001, 2013, "canada", dataset),
+      map_df(ind_types_all, run_regs, can_ind_id_list, "viirs_sum_log",         "N_firms_sum", 2011, 2013, "canada", dataset),
       
-      map_df(can_ind_ids, run_regs, "dmspolsharmon_sum_log", "employment_sum", 2001, 2013, "canada", dataset),
-      map_df(can_ind_ids, run_regs, "viirs_sum_log",         "employment_sum", 2011, 2013, "canada", dataset),
+      map_df(ind_types_all, run_regs, can_ind_id_list, "dmspolsharmon_sum_log", "employment_sum", 2001, 2013, "canada", dataset),
+      map_df(ind_types_all, run_regs, can_ind_id_list, "viirs_sum_log",         "employment_sum", 2011, 2013, "canada", dataset),
       
-      map_df(mex_ind_ids, run_regs, "dmspolsharmon_sum_log", "N_firms_sum", 2004, 2014, "mexico", dataset),
-      map_df(mex_ind_ids, run_regs, "viirs_sum_log",         "N_firms_sum", 2014, 2020, "mexico", dataset)
+      map_df(ind_types_all, run_regs, mex_ind_id_list, "dmspolsharmon_sum_log", "N_firms_sum", 2004, 2014, "mexico", dataset),
+      map_df(ind_types_all, run_regs, mex_ind_id_list, "viirs_sum_log",         "N_firms_sum", 2014, 2020, "mexico", dataset)
     )
     
   }
