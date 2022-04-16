@@ -20,28 +20,6 @@ firmdata_df$empl_med[firmdata_df$employment >= 251]       <- 300
 ## Factor Variable
 firmdata_df$empl_med_fact <- firmdata_df$empl_med %>% as.factor() %>% as.numeric()
 
-# Spatially Define -------------------------------------------------------------
-coordinates(firmdata_df) <- ~lon+lat
-crs(firmdata_df) <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
-
-# Extract DMSPOLS --------------------------------------------------------------
-firmdata_df$dmspols <- NA
-dmspols_04 <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("mexico_dmspols_",2004,".tif")))
-dmspols_09 <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("mexico_dmspols_",2009,".tif")))
-dmspols_13 <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("mexico_dmspols_",2013,".tif")))
-
-firmdata_df$dmspols[firmdata_df$year %in% 2004] <- raster::extract(dmspols_04, firmdata_df[firmdata_df$year %in% 2004,]) %>% as.numeric()
-firmdata_df$dmspols[firmdata_df$year %in% 2009] <- raster::extract(dmspols_09, firmdata_df[firmdata_df$year %in% 2009,]) %>% as.numeric()
-firmdata_df$dmspols[firmdata_df$year %in% 2014] <- raster::extract(dmspols_13, firmdata_df[firmdata_df$year %in% 2014,]) %>% as.numeric()
-
-# Extract VIIRS ----------------------------------------------------------------
-firmdata_df$viirs <- NA
-viirs_14 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_mean_",2014,".tif")))
-viirs_14c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_corrected_mean_",2014,".tif")))
-
-firmdata_df$viirs[firmdata_df$year %in% 2014] <- raster::extract(viirs_14, firmdata_df[firmdata_df$year %in% 2014,]) %>% as.numeric()
-firmdata_df$viirs_corrected[firmdata_df$year %in% 2014] <- raster::extract(viirs_14c, firmdata_df[firmdata_df$year %in% 2014,]) %>% as.numeric()
-
 # Simplify naics ---------------------------------------------------------------
 firmdata_df$naics2[firmdata_df$naics2 %in% 21:22] <- 21
 firmdata_df$naics2[firmdata_df$naics2 %in% 31:33] <- 31
@@ -52,6 +30,18 @@ firmdata_df$naics2[firmdata_df$naics2 %in% 51:56] <- 51
 firmdata_df$naics2[firmdata_df$naics2 %in% 61:62] <- 61
 firmdata_df$naics2[firmdata_df$naics2 %in% 71:72] <- 71
 firmdata_df$naics2[firmdata_df$naics2 %in% 81:92] <- 81
+
+# Add hexagon ids --------------------------------------------------------------
+firmdata_df <- firmdata_df 
+firmdata_sf <- st_as_sf(firmdata_df, coords = c("lon", "lat"), crs = 4326)
+
+for(i in 1:8){
+  print(i)
+  firmdata_sf[[paste0("hexgrid", i)]] <- point_to_h3_chunks(firmdata_sf, res = i, 1000000)
+}
+
+firmdata_df <- firmdata_sf
+firmdata_df$geometry <- NULL
 
 # Export -----------------------------------------------------------------------
 saveRDS(firmdata_df, file.path(data_file_path, "Mexico Industry Data", "FinalData", "firms_04_14.Rds"))

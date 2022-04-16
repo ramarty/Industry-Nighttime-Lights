@@ -52,11 +52,11 @@ city_to_grid_i <- function(i, city_sp, r){
 }
 
 #### Load Satellite Data
-can_viirs <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", "can_viirs_median_2019.tif"))
-mex_viirs <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", "mex_viirs_median_2019.tif"))
+can_viirs <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", "can_viirs_mean_2019.tif"))
+mex_viirs <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", "mex_viirs_mean_2019.tif"))
 
-can_dmsp <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED", "Harmonized_DN_NTL_2018_simVIIRS_CAN.tif"))
-mex_dmsp <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED", "Harmonized_DN_NTL_2018_simVIIRS_MEX.tif"))
+can_dmsp <- readRDS(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED", "FinalData", "canada_dmspols_harmon_2021.Rds"))
+mex_dmsp <- readRDS(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED", "FinalData", "mexico_dmspols_harmon_2021.Rds"))
 
 #### Make Grids
 can_viirs_sp <- lapply(1:nrow(can_cities), city_to_grid_i, can_cities, can_viirs) %>% do.call(what = "rbind")

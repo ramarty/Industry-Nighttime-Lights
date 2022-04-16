@@ -13,32 +13,9 @@ firmdata_df <- list.files(file.path(data_file_path, "Canada Industry Data", "Raw
 coordinates(firmdata_df) <- ~lon+lat
 crs(firmdata_df) <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
 
-# Extract DMSPOLS --------------------------------------------------------------
-firmdata_df$dmspols <- NA
-for(year in c(2001, 2003, 2005, 2007, 2009, 2011, 2013)){
-  print(year)
-  dmspols <- raster(file.path(data_file_path, "Nighttime Lights", "DMSPOLS", paste0("canada_dmspols_",year,".tif")))
-  firmdata_df$dmspols[firmdata_df$year %in% year] <- raster::extract(dmspols, firmdata_df[firmdata_df$year %in% year,]) %>% as.numeric()
-}
-
-# Extract VIIRS ----------------------------------------------------------------
-firmdata_df$viirs <- NA
-firmdata_df$viirs_lead <- NA
-
-viirs_12 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("can_viirs_median_",2012,".tif")))
-viirs_13 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("can_viirs_median_",2013,".tif")))
-viirs_14 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("can_viirs_median_",2014,".tif")))
-
-## VIIRS
-firmdata_df$viirs[firmdata_df$year %in% 2013] <- raster::extract(viirs_13, firmdata_df[firmdata_df$year %in% 2013,]) %>% as.numeric()
-
-## VIIRS Lag
-firmdata_df$viirs_lead[firmdata_df$year %in% 2011] <- raster::extract(viirs_12, firmdata_df[firmdata_df$year %in% 2011,]) %>% as.numeric()
-firmdata_df$viirs_lead[firmdata_df$year %in% 2013] <- raster::extract(viirs_14, firmdata_df[firmdata_df$year %in% 2013,]) %>% as.numeric()
-
 # Restrict Variables to Only Needed Ones ---------------------------------------
 firmdata_df@data <- firmdata_df@data %>%
-  dplyr::select(year, employment, dmspols, naics2, naicsname, dmspols, viirs, viirs_lead)
+  dplyr::select(year, employment, naics2, naicsname)
 
 # Remove Outliers --------------------------------------------------------------
 firmdata_df$employment[(firmdata_df$naicsname %in% "Educational Services") &
@@ -62,6 +39,18 @@ firmdata_df$naics2[firmdata_df$naics2 %in% 51:56] <- 51
 firmdata_df$naics2[firmdata_df$naics2 %in% 61:62] <- 61
 firmdata_df$naics2[firmdata_df$naics2 %in% 71:72] <- 71
 firmdata_df$naics2[firmdata_df$naics2 %in% 81:92] <- 81
+
+# Add hexagon ids --------------------------------------------------------------
+firmdata_df <- firmdata_df %>% as.data.frame()
+firmdata_sf <- st_as_sf(firmdata_df, coords = c("lon", "lat"), crs = 4326)
+
+for(i in 1:8){
+  print(i)
+  firmdata_sf[[paste0("hexgrid", i)]] <- point_to_h3(firmdata_sf, res = i)
+}
+
+firmdata_df <- firmdata_sf
+firmdata_df$geometry <- NULL
 
 # Export -----------------------------------------------------------------------
 saveRDS(firmdata_df, file.path(data_file_path, "Canada Industry Data", "FinalData", "firms.Rds"))

@@ -89,34 +89,6 @@ firmdata_df <- firmdata_df %>%
   dplyr::mutate(naics2 = naics6 %>% substring(1,2) %>% as.numeric()) %>%
   dplyr::select(-naics6)
 
-# Spatially Define -------------------------------------------------------------
-coordinates(firmdata_df) <- ~lon+lat
-crs(firmdata_df) <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
-
-# Extract VIIRS ----------------------------------------------------------------
-firmdata_df$viirs <- NA
-viirs_17 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_mean_",2017,".tif")))
-viirs_18 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_mean_",2018,".tif")))
-viirs_19 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_mean_",2019,".tif")))
-viirs_20 <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_mean_",2020,".tif")))
-
-firmdata_df$viirs[firmdata_df$year %in% 2017] <- raster::extract(viirs_17, firmdata_df[firmdata_df$year %in% 2017,]) %>% as.numeric()
-firmdata_df$viirs[firmdata_df$year %in% 2018] <- raster::extract(viirs_18, firmdata_df[firmdata_df$year %in% 2018,]) %>% as.numeric()
-firmdata_df$viirs[firmdata_df$year %in% 2019] <- raster::extract(viirs_19, firmdata_df[firmdata_df$year %in% 2019,]) %>% as.numeric()
-firmdata_df$viirs[firmdata_df$year %in% 2020] <- raster::extract(viirs_20, firmdata_df[firmdata_df$year %in% 2020,]) %>% as.numeric()
-
-# Extract VIIRS - Corrected ----------------------------------------------------
-firmdata_df$viirs_corrected <- NA
-viirs_17c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_corrected_mean_",2017,".tif")))
-viirs_18c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_corrected_mean_",2018,".tif")))
-viirs_19c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_corrected_mean_",2019,".tif")))
-viirs_20c <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0("mex_viirs_corrected_mean_",2020,".tif")))
-
-firmdata_df$viirs_corrected[firmdata_df$year %in% 2017] <- raster::extract(viirs_17c, firmdata_df[firmdata_df$year %in% 2017,]) %>% as.numeric()
-firmdata_df$viirs_corrected[firmdata_df$year %in% 2018] <- raster::extract(viirs_18c, firmdata_df[firmdata_df$year %in% 2018,]) %>% as.numeric()
-firmdata_df$viirs_corrected[firmdata_df$year %in% 2019] <- raster::extract(viirs_19c, firmdata_df[firmdata_df$year %in% 2019,]) %>% as.numeric()
-firmdata_df$viirs_corrected[firmdata_df$year %in% 2020] <- raster::extract(viirs_20c, firmdata_df[firmdata_df$year %in% 2020,]) %>% as.numeric()
-
 # Simplify naics ---------------------------------------------------------------
 firmdata_df$naics2[firmdata_df$naics2 %in% 21:22] <- 21
 firmdata_df$naics2[firmdata_df$naics2 %in% 31:33] <- 31
@@ -127,6 +99,18 @@ firmdata_df$naics2[firmdata_df$naics2 %in% 51:56] <- 51
 firmdata_df$naics2[firmdata_df$naics2 %in% 61:62] <- 61
 firmdata_df$naics2[firmdata_df$naics2 %in% 71:72] <- 71
 firmdata_df$naics2[firmdata_df$naics2 %in% 81:92] <- 81
+
+# Add hexagon ids --------------------------------------------------------------
+firmdata_df <- firmdata_df
+firmdata_sf <- st_as_sf(firmdata_df, coords = c("lon", "lat"), crs = 4326)
+
+for(i in 1:8){
+  print(i)
+  firmdata_sf[[paste0("hexgrid", i)]] <- point_to_h3_chunks(firmdata_sf, res = i, 1000000)
+}
+
+firmdata_df <- firmdata_sf
+firmdata_df$geometry <- NULL
 
 # Export -----------------------------------------------------------------------
 saveRDS(firmdata_df, file.path(data_file_path, "Mexico Industry Data", "FinalData", "firms_17_20.Rds"))

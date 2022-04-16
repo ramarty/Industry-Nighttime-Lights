@@ -1,100 +1,178 @@
 # Summarize data in polygons
 
-EXTRACT_DMSPOLS         <- F
-EXTRACT_DMSPOLSZHANG    <- F
-EXTRACT_DMSPOLSELVIDGE  <- F
-EXTRACT_DMSPOLSHARMON   <- T
-EXTRACT_VIIRS           <- T
-EXTRACT_VIIRS_CORRECTED <- T
+OVERWRITE_FILE <- F
 
-# LOOP OVER COUNTRY ------------------------------------------------------------
+# Define functions -------------------------------------------------------------
+
+# https://github.com/r-spatial/sf/issues/1525
+st_erase = function(x, y) st_difference(x, st_union(st_combine(y))) 
+
+rm_center_polygon <- function(polygon, polygon_buff){
+  # Uses polygon and polygon_buff as inputs. polygon_buff is a buffered version
+  # of polygon. Removes the 'polygon' area from 'polygon_buff'
+  
+  lapply(1:nrow(polygon), function(i){
+    if((i %% 100) %in% 0) print(paste0(i, "/", nrow(polygon), " Erase Center"))
+    
+    st_erase(polygon_buff[i,], polygon[i,])
+  }) %>% 
+    bind_rows()
+  
+}
+
+st_buffer_rm_center <- function(polygon,
+                                width,
+                                chunk_size = 500){
+  
+  if(FALSE %in% st_is_valid(polygon)){
+    # TODO: If takes too long, can do in chunks
+    polygon <- st_make_valid(polygon)
+  }
+  
+  polygon_buff <- st_buffer_chunks(polygon, width, chunk_size) 
+  polygon_buff_rm_c <- rm_center_polygon(polygon, polygon_buff)
+  
+}
+
+# Process data -----------------------------------------------------------------
 for(country in c("canada", "mexico")){
-  
-  ## Prep Parmaeters
-  country_cap <- capitalize(country)
-  
-  if(country %in% "canada") FIRM_YEARS <- FIRM_YEARS_CANADA
-  if(country %in% "mexico") FIRM_YEARS <- FIRM_YEARS_MEXICO
-  
-  grid_files <- list.files(file.path(data_file_path, "Grid", "RawData"), pattern = "*.Rds") %>%
-    stri_subset_fixed("raster", negate = TRUE)  %>% # remove "_raster.Rds"
-    str_replace_all(".Rds", "") %>%
-    str_subset(country %>% substring(1,3)) 
-  
-  OUT_PATH <- file.path(data_file_path, "Grid", "FinalData", country,  "individual_datasets")
-  
-  # LOOP OVER GRID -------------------------------------------------------------
-  for(grid_i in grid_files){
-
-    # Deterimine buffer to use (for spatial lag)
-    if(grepl("city", grid_i)) buffer_sizes <- c("none", "1km", "2km", "5km", "10km")
-    
-    if(grepl("hex", grid_i)){
-      unit_size <- grid_i %>% str_replace_all("mex_hex_|can_hex_", "")
-      buffer_sizes <- c("none", unit_size)
-    }
-    
-    # LOOP OVER BUFFER ---------------------------------------------------------
-    for(buffer_i in buffer_sizes){
-      print(paste(buffer_i, grid_i, country, "-------------------------------"))
+  for(buffer_times_width in c(0, 1, 2)){
+    for(res in 1:8){
       
-      suffix_name <- ""
-      polygon <- readRDS(file.path(data_file_path, "Grid", "RawData", paste0(grid_i, ".Rds")))
+      #### Country details
+      if(country %in% "canada") FIRM_YEARS <- FIRM_YEARS_CANADA
+      if(country %in% "mexico") FIRM_YEARS <- FIRM_YEARS_MEXICO
       
-      if(grepl("city", grid_i)) polygon <- gBuffer(polygon, width = 0, byid=T) # self intersections, for cities
-
-      if(buffer_i != "none"){
-        if(country %in% "mexico") polygon <- polygon %>% spTransform(PROJ_mexico)
-        if(country %in% "canada") polygon <- polygon %>% spTransform(PROJ_canada)
+      iso <- country %>% substring(1,3)
+      
+      if(res %in% 1) width <- 418.676005500*1000*2
+      if(res %in% 2) width <- 158.244655800*1000*2
+      if(res %in% 3) width <- 59.810857940*1000*2
+      if(res %in% 4) width <- 22.606379400*1000*2
+      if(res %in% 5) width <- 8.544408276*1000*2
+      if(res %in% 6) width <- 3.229482772*1000*2
+      if(res %in% 7) width <- 1.220629759*1000*2
+      if(res %in% 8) width <- 0.461354684*1000*2
+      
+      #### Load grid
+      grid_sf <- readRDS(file.path(data_file_path, "Grid", "FinalData", country, "grids_blank",
+                                   paste0("hexgrid_", res, ".Rds")))
+      
+      #### Names for dataset
+      dset <- paste0("hexgrid", res)
+      suffix <- ""
+      
+      #### Buffer
+      if(buffer_times_width != 0){
         
-        if(grepl("city", grid_i)) suffix_name <- paste0("_splag", buffer_i)
-        if(grepl("hex",  grid_i)) suffix_name <- paste0("_splag", "unit")
+        grid_sf <- st_buffer_rm_center(grid_sf, width*buffer_times_width)
         
-        buffer_i_value <- buffer_i %>% str_replace_all("km", "") %>% as.numeric
-        
-        polygon <- buffer_rm_center(polygon, width = buffer_i_value*1000)
+        suffix <- paste("_splag_wdt", buffer_times_width)
       }
       
-      # Add group variable
-      polygon <- spTransform(polygon, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
-      polygon$group <- 1
-
-      ## DMSPOLS - ZHANG
-      print("dmspols zhang -----------------------------------------------------")
-      if(EXTRACT_DMSPOLSZHANG){
-        polygon_dmspols_z <- lapply(FIRM_YEARS[FIRM_YEARS <= 2014], extract_ntl, polygon, country, "dmspolszhang", suffix_name) %>% bind_rows()
-        saveRDS(polygon_dmspols_z, file.path(OUT_PATH, paste0(grid_i,"_dmspolszhang_buffer",buffer_i,".Rds")))
-      }
-      
-      ## DMSPOLS - ELVIDGE
-      print("dmspols elvidge ---------------------------------------------------")
-      if(EXTRACT_DMSPOLSELVIDGE){
-        polygon_dmspols_e <- lapply(FIRM_YEARS[FIRM_YEARS <= 2014], extract_ntl, polygon, country, "dmspolselvidge", suffix_name) %>% bind_rows()
-        saveRDS(polygon_dmspols_e, file.path(OUT_PATH, paste0(grid_i,"_dmspolselvidge_buffer",buffer_i,".Rds")))
-      }
-      
-      ## DMSPOLS - HARMON
-      print("dmspols harmon ---------------------------------------------------")
-      if(EXTRACT_DMSPOLSHARMON){
-        polygon_dmspols_h <- lapply(FIRM_YEARS[FIRM_YEARS <= 2018], extract_ntl, polygon, country, "dmspolsharmon", suffix_name) %>% bind_rows()
-        saveRDS(polygon_dmspols_h, file.path(OUT_PATH, paste0(grid_i,"_dmspolsharmon_buffer",buffer_i,".Rds")))
-      }
+      #### Extract data 
       
       ## VIIRS
-      print("viirs -------------------------------------------------------------")
-      if(EXTRACT_VIIRS){
-        polygon_viirs <- lapply(FIRM_YEARS[FIRM_YEARS >= 2011], extract_ntl, polygon, country, "viirs", suffix_name) %>% bind_rows()
-        saveRDS(polygon_viirs, file.path(OUT_PATH, paste0(grid_i,"_viirs_buffer",buffer_i,".Rds")))
+      OUT_FILE <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets", "ntl", 
+                            paste0(dset, "_viirs", suffix, ".Rds"))
+      
+      if(!file.exists(OUT_FILE) | OVERWRITE_FILE){
+        
+        ntl_df <- map_df(FIRM_YEARS[FIRM_YEARS >= 2012], function(year){
+          print(year)
+          r <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0(iso, "_viirs_mean_",year,".tif")))
+          grid_sf[[paste0("viirs", suffix)]] <- exact_extract(r, grid_sf, 'mean')
+          grid_sf$year <- year
+          grid_sf$geometry <- NULL
+          return(grid_sf)
+        })
+        
+        saveRDS(ntl_df, OUT_FILE)
+        
+        rm(ntl_df)
+        
       }
       
       ## VIIRS Corrected
-      print("viirs corrected ---------------------------------------------------")
-      if(EXTRACT_VIIRS_CORRECTED & (country %in% "mexico")){
-        polygon_viirs_c <- lapply(FIRM_YEARS[FIRM_YEARS >= 2014], extract_ntl, polygon, country, "viirs_corrected", suffix_name) %>% bind_rows()
-        saveRDS(polygon_viirs_c, file.path(OUT_PATH, paste0(grid_i,"_viirs_corrected_buffer",buffer_i,".Rds")))
+      OUT_FILE <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets", "ntl", 
+                            paste0(dset, "_viirs_corrected", suffix, ".Rds"))
+      
+      if(country %in% "mexico"){ # Canada doesn't have years that overlap
+        if(!file.exists(OUT_FILE) | OVERWRITE_FILE){
+          
+          ntl_df <- map_df(FIRM_YEARS[FIRM_YEARS >= 2014], function(year){
+            print(year)
+            r <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0(iso, "_viirs_corrected_mean_",year,".tif")))
+            grid_sf[[paste0("viirs_c", suffix)]] <- exact_extract(r, grid_sf, 'mean')
+            grid_sf$year <- year
+            grid_sf$geometry <- NULL
+            return(grid_sf)
+          })
+          
+          saveRDS(ntl_df, OUT_FILE)
+          
+          rm(ntl_df)
+          
+        }
+      }
+      
+      ## DMSP Harmonized
+      OUT_FILE <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets", "ntl", 
+                            paste0(dset, "_dmspols_harmon", suffix, ".Rds"))
+      
+      if(!file.exists(OUT_FILE) | OVERWRITE_FILE){
+        
+        ntl_df <- map_df(FIRM_YEARS, function(year){
+          print(year)
+          r <- readRDS(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED",
+                                 "FinalData",
+                                 paste0(country, "_dmspols_harmon_", year, suffix, ".Rds")))
+          grid_sf[[paste0("dmspharmon", suffix)]] <- exact_extract(r, grid_sf, 'mean')
+          grid_sf$year <- year
+          grid_sf$geometry <- NULL
+          return(grid_sf)
+        })
+        
+        saveRDS(ntl_df, OUT_FILE)
+        
+        rm(ntl_df)
+        
+      }
+      
+      ## DMSP Harmonized - calSIM Only
+      # Mexico has data in 2004, 2009, 2014, etc. To look at trends from 2004 to 2014,
+      # use calDMSP in 2013 rather than simVIIRS in 2014.
+      OUT_FILE <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets", "ntl", 
+                            paste0(dset, "_dmspols_harmon_caldmsp", suffix, ".Rds"))
+      
+      if(!file.exists(OUT_FILE) | OVERWRITE_FILE){
+        
+        ntl_df <- map_df(FIRM_YEARS[FIRM_YEARS <= 2014], function(year){
+          print(year)
+          
+          if(year %in% 2014){
+            year_ntl <- 2013
+          } else{
+            year_ntl <- year
+          }
+          
+          r <- readRDS(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED",
+                                 "FinalData",
+                                 paste0(country, "_dmspols_harmon_", year_ntl, ".Rds")))
+          grid_sf[[paste0("caldmsp", suffix)]] <- exact_extract(r, grid_sf, 'mean')
+          grid_sf$year <- year
+          grid_sf$geometry <- NULL
+          return(grid_sf)
+        })
+        
+        saveRDS(ntl_df, OUT_FILE)
+        
+        rm(ntl_df)
+        
       }
       
     }
   }
 }
+
 

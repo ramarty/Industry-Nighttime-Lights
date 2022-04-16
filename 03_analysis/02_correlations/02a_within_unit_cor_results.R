@@ -20,7 +20,7 @@ transform <- "log"
 
 df_out_all <- data.frame(NULL)
 for(country in c("Canada", "Mexico")){
-  for(ntl_var in c("dmspolsharmon_sum", "viirs_sum")){
+  for(ntl_var in c("dmspolsharmon_mean", "viirs_mean")){
     
     ## Grab dataset
     if(country %in% "Canada")                             df <- can

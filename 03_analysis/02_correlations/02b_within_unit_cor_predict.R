@@ -17,8 +17,8 @@ cor_df <- cor_df %>%
   dplyr::filter(transform %in% "log")
 
 cor_df <- cor_df %>%
-  dplyr::mutate(ntl_var = case_when(ntl_var %in% "dmspolsharmon_sum" ~ "DMSP-OLS",
-                                    ntl_var %in% "viirs_sum"        ~ "VIIRS"),
+  dplyr::mutate(ntl_var = case_when(ntl_var %in% "dmspolsharmon_mean" ~ "DMSP",
+                                    ntl_var %in% "viirs_mean"        ~ "VIIRS"),
                 firm_var = case_when(firm_var %in% "N_firms_sum_all"    ~ "N Firms",
                                      firm_var %in% "employment_sum_all" ~ "Employment")) %>%
   dplyr::mutate(unit = unit %>% factor(levels = c("City",
@@ -34,7 +34,7 @@ cor_df <- cor_df %>%
 ## Dataframe that includes model
 lm_list <- cor_df %>%
   dplyr::group_by(country, unit, ntl_var, firm_var, title) %>%
-  do(model = lm(cor ~ firm_var_min + firm_var_change, data = .)) %>%
+  do(model = lm(cor ~ firm_var_min + firm_var_change + firm_var_splag_change + firm_var_splag_change_diff_abs + firm_var_change:firm_var_splag_change_diff_abs + firm_var_splag_change:firm_var_splag_change_diff_abs, data = .)) %>%
   dplyr::ungroup() %>%
   dplyr::mutate(model_id = 1:n())
 
@@ -57,6 +57,8 @@ lm_coefs <- lm_coefs %>%
   mutate(adj.r.squared = paste0("<b>R<sup>2</sup>: ", round(adj.r.squared, 3)), "</b>") %>%
   mutate(var = case_when(var == "firm_var_change" ~ "Firm Growth Rate",
                          var == "firm_var_min" ~ "Firm Min. Value (Log)",
+                         var == "firm_var_splag_change" ~ "Firm Growth Rate [Spatial Lag]",
+                         var == "firm_var_splag_change_diff_abs" ~ "Diff Growth Rate: Firm and Spatial Lag",
                          TRUE ~ var)) 
 
 lm_coefs <- lm_coefs[!(lm_coefs$country == "Canada" & lm_coefs$ntl_var == "VIIRS"),]
@@ -65,6 +67,7 @@ lm_coefs <- lm_coefs[!(lm_coefs$country == "Canada" & lm_coefs$ntl_var == "VIIRS
 text_x <- 0.15
 
 p <- lm_coefs %>%
+  filter(unit != "City") %>%
   ggplot(aes(y=unit,
              x = coef,
              xmin = ci2_5,
@@ -85,7 +88,7 @@ p <- lm_coefs %>%
   labs(color = "Variable",
        x = "Coef (+/- 95% CI)",
        y = NULL) +
-  scale_color_manual(values = c("dodgerblue3", "darkorange2"),
+  scale_color_manual(values = c("dodgerblue3", "darkorange2", "red", "green", "purple", "black"),
                      guide = guide_legend(reverse = TRUE)) +
   theme(strip.text = element_text(face = "bold", size = 9),
         strip.background = element_blank()) +
@@ -97,21 +100,35 @@ ggsave(p, filename = file.path(figures_file_path, "predict_within_cor_reg.png"),
        width = 10)
 
 # Other Figure -----------------------------------------------------------------
-cor_df %>%
-  filter(country == "Mexico",
-         unit == "5km Grid",
-         firm_var == "N Firms",
-         ntl_var == "VIIRS") %>%
+# filter(country == "Mexico",
+#        unit == "5km Grid",
+#        firm_var == "N Firms",
+#        ntl_var == "VIIRS") %>%
+
+p_cor <- cor_df %>%
+  dplyr::filter( (country == "Mexico") |
+                   country == "Canada" & ntl_var == "DMSP") %>%
+  mutate(unit = unit %>% factor() %>% fct_rev()) %>%
   ggplot(aes(x = firm_var_change,
              y = cor)) +
-  geom_point(alpha = 0.4,
-             size = 0.8)+
-  labs(x = "Firm Growth Rate",
-       y = "Correlation",
-       title = "Firm Growth Rate within Units vs. Within Unit\nCorrelation Between N Firms and VIIRS\n(Mexico, 5km Grid)") +
-  theme(plot.title = element_text(size = 10)) +
-  ggsave(filename = file.path(figures_file_path, "withincor_vs_firmgrowth.png"),
-         height = 4, 
-         width = 4)
+  geom_point(alpha = 1,
+             size = 0.02,
+             color = "dodgerblue4")+
+  labs(x = "N Firms Growth Rate",
+       y = "Correlation\nBetween NTL\nand N Firms\nWithin Units",
+       title = NULL) +
+  theme_classic() +
+  theme(plot.title = element_text(size = 10),
+        strip.background = element_blank(),
+        axis.title = element_text(size = 20),
+        axis.title.y = element_text(angle = 0, vjust = 0.5),
+        axis.text = element_text(size = 16),
+        strip.text.x = element_text(size = 20, face = "bold"),
+        strip.text.y.right = element_text(angle = 0, size = 20, face = "bold")) +
+  facet_grid(unit~country+ntl_var) 
+
+ggsave(p_cor, filename = file.path(figures_file_path, "withincor_vs_firmgrowth.png"),
+       height = 8.5, 
+       width = 13)
 
 

@@ -7,14 +7,17 @@ options(dplyr.summarise.inform = FALSE)
 options(dplyr.rename.inform = FALSE)
 
 # Filepaths --------------------------------------------------------------------
-if(Sys.info()[["user"]] == "robmarty") overleaf_file_path <- "~/Dropbox/Apps/Overleaf/Industry and Nighttime Lights"
+if(Sys.info()[["user"]] == "robmarty"){
+  overleaf_file_path <- "~/Dropbox/Apps/Overleaf/Industry and Nighttime Lights"
+  project_file_path  <- "~/Dropbox/World Bank/Methods Papers/Industry and Nighttime lights Project"
+  github_file_path   <- "~/Documents/Github/Industry-Nighttime-Lights"
+}
 
-if(Sys.info()[["user"]] == "WB521633") project_file_path <- "C:/Users/wb521633/Dropbox/World Bank/Methods Papers/Industry and Nighttime lights Project"
-if(Sys.info()[["user"]] == "robmarty") project_file_path <- "~/Dropbox/World Bank/Methods Papers/Industry and Nighttime lights Project"
-
-if(Sys.info()[["user"]] == "WB521633") github_file_path <- "C:/Users/wb521633/Documents/Github/Industry-Nighttime-Lights"
-if(Sys.info()[["user"]] == "robmarty") github_file_path <- "~/Documents/Github/Industry-Nighttime-Lights"
-
+if(Sys.info()[["user"]] == "WB521633"){
+  project_file_path <- "C:/Users/wb521633/Dropbox/World Bank/Methods Papers/Industry and Nighttime lights Project"
+  github_file_path  <- "C:/Users/wb521633/Documents/Github/Industry-Nighttime-Lights"
+}
+ 
 data_file_path       <- file.path(project_file_path, "Data")
 raw_data_file_path   <- file.path(project_file_path, "Data", "RawData")
 final_data_file_path <- file.path(project_file_path, "Data", "FinalData")
@@ -68,6 +71,9 @@ library(ggpubr)
 library(stringi)
 library(leaflet)
 library(ggtext)
+#library(h3) # remotes::install_github("crazycapivara/h3-r")
+library(h3jsr)
+library(exactextractr)
 
 # User Defined Functions -------------------------------------------------------
 source("https://raw.githubusercontent.com/ramarty/fast-functions/master/R/functions_in_chunks.R")
@@ -83,12 +89,23 @@ if(RUN_SCRIPTS){
   # Download GADM files for each country and make a convex hull around Canada.
   
   ## Download GADM
-  source(file.path(clean_indiv_code_dir, "GADM", "download_gadm.R"))
+  source(file.path(clean_indiv_code_dir, "01_gadm", "01_download_gadm.R"))
   
   ## Make convex hull around Canada. This polygon is used to extract nighttime lights
   # from Google Earth Engine. We only do this for Canada (not Mexico) as Canada
   # is big and causes computational problems.
-  source(file.path(clean_indiv_code_dir, "GADM", "canada_chull.R"))
+  source(file.path(clean_indiv_code_dir, "01_gadm", "02_canada_chull.R"))
+  
+  # 1.2 Process Nighttime Lights -----------------------------------------------
+  # TODO: Include GEE Code here
+  
+  source(file.path(clean_indiv_code_dir, "01_ntl", "separate_dmspharmon_by_country.R"))
+
+  # 1.3 Clean city data --------------------------------------------------------
+  source(file.path(clean_indiv_code_dir, "02_create_city_data", "01_clean_can_cities.R"))
+  source(file.path(clean_indiv_code_dir, "02_create_city_data", "01_clean_mex_cities.R"))
+  source(file.path(clean_indiv_code_dir, "02_create_city_data", "02_grids_in_cities.R"))
+  
   
   # 1.2 Firms Data ---------------------------------------------------------------
   # Clean firm data and add value of nighttime lights pixel to each firm. For each
@@ -98,19 +115,19 @@ if(RUN_SCRIPTS){
   
   #### Canada
   # Clean Data
-  source(file.path(clean_indiv_code_dir, "Canada Firm Data", "01_append_firm_data.R"))
+  source(file.path(clean_indiv_code_dir, "03_canada_firm_data", "01_append_firm_data.R"))
   
   # Create file for each year
-  source(file.path(clean_indiv_code_dir, "Canada Firm Data", "02_split_separate_years.R"))
+  source(file.path(clean_indiv_code_dir, "03_canada_firm_data", "02_split_separate_years.R"))
   
   #### Mexico
   # Separately clean 2004 - 2014 and 2017 - 2017 files as these have slightly
   # different formatting
-  source(file.path(clean_indiv_code_dir, "Mexico Firm Data", "01_append_firm_data_04_14.R"))
-  source(file.path(clean_indiv_code_dir, "Mexico Firm Data", "01_append_firm_data_17_20.R"))
+  source(file.path(clean_indiv_code_dir, "03_mexico_firm_data", "01_append_firm_data_04_14.R"))
+  source(file.path(clean_indiv_code_dir, "03_mexico_firm_data", "01_append_firm_data_17_20.R"))
   
   # Create file for each year
-  source(file.path(clean_indiv_code_dir, "Mexico Firm Data", "02_split_separate_years.R"))
+  source(file.path(clean_indiv_code_dir, "03_mexico_firm_data", "02_split_separate_years.R"))
   
   # 1.3 Grid Data ----------------------------------------------------------------
   # Create hexagonal grids for each country of different sizes (5km up to 1000km
@@ -121,18 +138,8 @@ if(RUN_SCRIPTS){
   # or no firms are removed.
   
   ## Create grids
-  source(file.path(clean_indiv_code_dir, "Grids", "01_create_hexagons_canada.R"))
-  source(file.path(clean_indiv_code_dir, "Grids", "01_create_hexagons_mexico.R"))
-  
-  ## Rasterize grid polygons
-  source(file.path(clean_indiv_code_dir, "Grids", "02_rasterize.R"))
-  
-  # 1.4 City Data --------------------------------------------------------------
-  # Clean/standardize city-level datasets
-  
-  source(file.path(clean_indiv_code_dir, "Cities in Canada", "01_clean_can_cities.R"))
-  source(file.path(clean_indiv_code_dir, "Cities in Mexico", "01_clean_mex_cities.R"))
-  
+  source(file.path(clean_indiv_code_dir, "04_create_hexagons", "01_create_hexagons_canada.R"))
+  source(file.path(clean_indiv_code_dir, "04_create_hexagons", "01_create_hexagons_mexico.R"))
   
   # 2. CREATE ANALYSIS DATASETS ================================================
   # Extracts firm employment and nighttime light values to polygons. Creates
