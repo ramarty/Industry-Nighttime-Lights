@@ -74,6 +74,8 @@ library(ggtext)
 #library(h3) # remotes::install_github("crazycapivara/h3-r")
 library(h3jsr)
 library(exactextractr)
+library(data.table)
+library(dtplyr)
 
 # User Defined Functions -------------------------------------------------------
 source("https://raw.githubusercontent.com/ramarty/fast-functions/master/R/functions_in_chunks.R")

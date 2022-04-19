@@ -22,7 +22,7 @@ rm_center_polygon <- function(polygon, polygon_buff){
 
 st_buffer_rm_center <- function(polygon,
                                 width,
-                                chunk_size = 500){
+                                chunk_size = 2000){
   
   if(FALSE %in% st_is_valid(polygon)){
     # TODO: If takes too long, can do in chunks
@@ -37,7 +37,7 @@ st_buffer_rm_center <- function(polygon,
 # Process data -----------------------------------------------------------------
 for(country in c("canada", "mexico")){
   for(buffer_times_width in c(0, 1, 2)){
-    for(res in 1:8){
+    for(res in 1:7){
       
       #### Country details
       if(country %in% "canada") FIRM_YEARS <- FIRM_YEARS_CANADA
@@ -62,115 +62,136 @@ for(country in c("canada", "mexico")){
       dset <- paste0("hexgrid", res)
       suffix <- ""
       
-      #### Buffer
+      #### Out files and check if need to process any file
+      ## Buffer suffix
       if(buffer_times_width != 0){
+        suffix <- paste0("_splag_wdt", buffer_times_width)
+      }
+      
+      OUT_FILE_VIIRS <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets", "ntl", 
+                                  paste0(dset, "_viirs", suffix, ".Rds"))
+      
+      OUT_FILE_VIIRS_C <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets", "ntl", 
+                                    paste0(dset, "_viirs_corrected", suffix, ".Rds"))
+      
+      OUT_FILE_DMSP_HARMON <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets", "ntl", 
+                                        paste0(dset, "_dmspols_harmon", suffix, ".Rds"))
+      
+      OUT_FILE_DMSP_CAL <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets", "ntl", 
+                                     paste0(dset, "_dmspols_harmon_caldmsp", suffix, ".Rds"))
+      
+      if(country %in% "mexico"){
+        EXTRACT_ANY <- (!file.exists(OUT_FILE_VIIRS) |
+                          !file.exists(OUT_FILE_VIIRS_C) | 
+                          !file.exists(OUT_FILE_DMSP_HARMON) |
+                          !file.exists(OUT_FILE_DMSP_CAL) | 
+                          OVERWRITE_FILE)
+      } else{
+        EXTRACT_ANY <- (!file.exists(OUT_FILE_VIIRS) |
+                          #!file.exists(OUT_FILE_VIIRS_C) | ## Don't compute for Canada
+                          !file.exists(OUT_FILE_DMSP_HARMON) |
+                          !file.exists(OUT_FILE_DMSP_CAL) | 
+                          OVERWRITE_FILE)
         
-        grid_sf <- st_buffer_rm_center(grid_sf, width*buffer_times_width)
-        
-        suffix <- paste("_splag_wdt", buffer_times_width)
       }
       
       #### Extract data 
-      
-      ## VIIRS
-      OUT_FILE <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets", "ntl", 
-                            paste0(dset, "_viirs", suffix, ".Rds"))
-      
-      if(!file.exists(OUT_FILE) | OVERWRITE_FILE){
+      if(EXTRACT_ANY){
+        print(paste(country, buffer_times_width, res))
         
-        ntl_df <- map_df(FIRM_YEARS[FIRM_YEARS >= 2012], function(year){
-          print(year)
-          r <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0(iso, "_viirs_mean_",year,".tif")))
-          grid_sf[[paste0("viirs", suffix)]] <- exact_extract(r, grid_sf, 'mean')
-          grid_sf$year <- year
-          grid_sf$geometry <- NULL
-          return(grid_sf)
-        })
+        #### Buffer
+        if(buffer_times_width != 0){
+          grid_sf <- st_buffer_rm_center(grid_sf, width*buffer_times_width)
+        }
         
-        saveRDS(ntl_df, OUT_FILE)
-        
-        rm(ntl_df)
-        
-      }
-      
-      ## VIIRS Corrected
-      OUT_FILE <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets", "ntl", 
-                            paste0(dset, "_viirs_corrected", suffix, ".Rds"))
-      
-      if(country %in% "mexico"){ # Canada doesn't have years that overlap
-        if(!file.exists(OUT_FILE) | OVERWRITE_FILE){
+        ## VIIRS
+        if(!file.exists(OUT_FILE_VIIRS) | OVERWRITE_FILE){
           
-          ntl_df <- map_df(FIRM_YEARS[FIRM_YEARS >= 2014], function(year){
+          ntl_df <- map_df(FIRM_YEARS[FIRM_YEARS >= 2012], function(year){
             print(year)
-            r <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0(iso, "_viirs_corrected_mean_",year,".tif")))
-            grid_sf[[paste0("viirs_c", suffix)]] <- exact_extract(r, grid_sf, 'mean')
+            r <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0(iso, "_viirs_mean_",year,".tif")))
+            grid_sf[[paste0("viirs", suffix)]] <- exact_extract(r, grid_sf, 'mean')
             grid_sf$year <- year
             grid_sf$geometry <- NULL
             return(grid_sf)
           })
           
-          saveRDS(ntl_df, OUT_FILE)
+          saveRDS(ntl_df, OUT_FILE_VIIRS)
           
           rm(ntl_df)
           
         }
-      }
-      
-      ## DMSP Harmonized
-      OUT_FILE <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets", "ntl", 
-                            paste0(dset, "_dmspols_harmon", suffix, ".Rds"))
-      
-      if(!file.exists(OUT_FILE) | OVERWRITE_FILE){
         
-        ntl_df <- map_df(FIRM_YEARS, function(year){
-          print(year)
-          r <- readRDS(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED",
-                                 "FinalData",
-                                 paste0(country, "_dmspols_harmon_", year, suffix, ".Rds")))
-          grid_sf[[paste0("dmspharmon", suffix)]] <- exact_extract(r, grid_sf, 'mean')
-          grid_sf$year <- year
-          grid_sf$geometry <- NULL
-          return(grid_sf)
-        })
-        
-        saveRDS(ntl_df, OUT_FILE)
-        
-        rm(ntl_df)
-        
-      }
-      
-      ## DMSP Harmonized - calSIM Only
-      # Mexico has data in 2004, 2009, 2014, etc. To look at trends from 2004 to 2014,
-      # use calDMSP in 2013 rather than simVIIRS in 2014.
-      OUT_FILE <- file.path(data_file_path, "Grid", "FinalData", country, "individual_datasets", "ntl", 
-                            paste0(dset, "_dmspols_harmon_caldmsp", suffix, ".Rds"))
-      
-      if(!file.exists(OUT_FILE) | OVERWRITE_FILE){
-        
-        ntl_df <- map_df(FIRM_YEARS[FIRM_YEARS <= 2014], function(year){
-          print(year)
-          
-          if(year %in% 2014){
-            year_ntl <- 2013
-          } else{
-            year_ntl <- year
+        ## VIIRS Corrected
+        if(country %in% "mexico"){ # Canada doesn't have years that overlap
+          if(!file.exists(OUT_FILE_VIIRS_C) | OVERWRITE_FILE){
+            
+            ntl_df <- map_df(FIRM_YEARS[FIRM_YEARS >= 2014], function(year){
+              print(year)
+              r <- raster(file.path(data_file_path, "Nighttime Lights", "VIIRS", paste0(iso, "_viirs_corrected_mean_",year,".tif")))
+              grid_sf[[paste0("viirs_c", suffix)]] <- exact_extract(r, grid_sf, 'mean')
+              grid_sf$year <- year
+              grid_sf$geometry <- NULL
+              return(grid_sf)
+            })
+            
+            saveRDS(ntl_df, OUT_FILE_VIIRS_C)
+            
+            rm(ntl_df)
+            
           }
+        }
+        
+        ## DMSP Harmonized
+        if(!file.exists(OUT_FILE_DMSP_HARMON) | OVERWRITE_FILE){
           
-          r <- readRDS(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED",
-                                 "FinalData",
-                                 paste0(country, "_dmspols_harmon_", year_ntl, ".Rds")))
-          grid_sf[[paste0("caldmsp", suffix)]] <- exact_extract(r, grid_sf, 'mean')
-          grid_sf$year <- year
-          grid_sf$geometry <- NULL
-          return(grid_sf)
-        })
+          ntl_df <- map_df(FIRM_YEARS, function(year){
+            print(year)
+            r <- readRDS(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED",
+                                   "FinalData",
+                                   paste0(country, "_dmspols_harmon_", year, ".Rds")))
+            grid_sf[[paste0("dmspharmon", suffix)]] <- exact_extract(r, grid_sf, 'mean')
+            grid_sf$year <- year
+            grid_sf$geometry <- NULL
+            return(grid_sf)
+          })
+          
+          saveRDS(ntl_df, OUT_FILE_DMSP_HARMON)
+          
+          rm(ntl_df)
+          
+        }
         
-        saveRDS(ntl_df, OUT_FILE)
-        
-        rm(ntl_df)
+        ## DMSP Harmonized - calSIM Only
+        # Mexico has data in 2004, 2009, 2014, etc. To look at trends from 2004 to 2014,
+        # use calDMSP in 2013 rather than simVIIRS in 2014.
+        if(!file.exists(OUT_FILE_DMSP_CAL) | OVERWRITE_FILE){
+          
+          ntl_df <- map_df(FIRM_YEARS[FIRM_YEARS <= 2014], function(year){
+            print(year)
+            
+            if(year %in% 2014){
+              year_ntl <- 2013
+            } else{
+              year_ntl <- year
+            }
+            
+            r <- readRDS(file.path(data_file_path, "Nighttime Lights", "DMSPOLS_VIIRS_LI_HARMONIZED",
+                                   "FinalData",
+                                   paste0(country, "_dmspols_harmon_", year_ntl, ".Rds")))
+            grid_sf[[paste0("caldmsp", suffix)]] <- exact_extract(r, grid_sf, 'mean')
+            grid_sf$year <- year
+            grid_sf$geometry <- NULL
+            return(grid_sf)
+          })
+          
+          saveRDS(ntl_df, OUT_FILE_DMSP_CAL)
+          
+          rm(ntl_df)
+          
+        }
         
       }
-      
     }
   }
 }
